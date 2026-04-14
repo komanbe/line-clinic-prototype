@@ -1092,7 +1092,50 @@ function AvatarScene({ talking }) {
   )
 }
 
+const USER_AVATARS = [
+  { id: 'rabbit', emoji: '🐰', name: 'うさぎ', color: '#FFE4EC', desc: 'やさしい気持ちに' },
+  { id: 'bear', emoji: '🧸', name: 'くまさん', color: '#FFF3E0', desc: '安心感アップ' },
+  { id: 'cat', emoji: '🐱', name: 'ねこ', color: '#F3E5F5', desc: 'マイペースに' },
+  { id: 'penguin', emoji: '🐧', name: 'ペンギン', color: '#E3F2FD', desc: '冷静に話せる' },
+  { id: 'dog', emoji: '🐶', name: 'いぬ', color: '#FFF8E1', desc: '元気が出る' },
+  { id: 'panda', emoji: '🐼', name: 'パンダ', color: '#F1F8E9', desc: 'リラックス' },
+]
+
+function AvatarSelectScreen({ onSelect, onBack, theme }) {
+  const aiColor = theme === 'utokyo' ? '#00356B' : '#028090'
+  return (
+    <div className="flex flex-col h-full slide-enter">
+      <LiffHeader title="アバターを選ぼう" onBack={onBack} onClose={onBack} />
+      <div className="flex-1 bg-gray-50 p-4 overflow-y-auto hide-scrollbar">
+        <div className="text-center mb-4">
+          <div className="text-4xl mb-2">✨</div>
+          <h2 className="text-base font-bold text-gray-800">あなたのアバターを選んでください</h2>
+          <p className="text-[10px] text-gray-400 mt-1">アバターを使うことで安心して話せます<br/>（プロテウス効果：なりたい自分になれる）</p>
+        </div>
+        <div className="grid grid-cols-3 gap-3">
+          {USER_AVATARS.map((av, i) => (
+            <button key={av.id} onClick={() => onSelect(av)}
+              className="bg-white rounded-2xl p-3 shadow-sm hover:shadow-md transition flex flex-col items-center gap-1.5 fade-enter"
+              style={{ animationDelay: `${i * 60}ms` }}>
+              <div className="w-14 h-14 rounded-full flex items-center justify-center text-3xl" style={{ background: av.color }}>
+                {av.emoji}
+              </div>
+              <span className="text-xs font-bold text-gray-700">{av.name}</span>
+              <span className="text-[9px] text-gray-400">{av.desc}</span>
+            </button>
+          ))}
+        </div>
+        <div className="mt-4 bg-purple-50 rounded-xl p-3 text-[10px] text-purple-700">
+          <span className="font-bold">💡 プロテウス効果とは？</span><br/>
+          アバターの見た目が自分の行動や心理に影響を与える現象。かわいいアバターを選ぶと、よりオープンに話せるようになる研究結果があります。
+        </div>
+      </div>
+    </div>
+  )
+}
+
 function AvatarChatScreen({ onBack, theme }) {
+  const [userAvatar, setUserAvatar] = useState(null)
   const [messages, setMessages] = useState([
     { role: 'ai', text: 'こんにちは。AIカウンセラーの「ミライ」です。何でもお気軽にご相談ください。あなたのお話をしっかり聴きますね。' }
   ])
@@ -1135,6 +1178,10 @@ function AvatarChatScreen({ onBack, theme }) {
   useEffect(() => {
     if (chatRef.current) chatRef.current.scrollTop = chatRef.current.scrollHeight
   }, [messages, typing])
+
+  if (!userAvatar) {
+    return <AvatarSelectScreen onSelect={setUserAvatar} onBack={onBack} theme={theme} />
+  }
 
   if (showMinutes) {
     return (
@@ -1224,6 +1271,11 @@ function AvatarChatScreen({ onBack, theme }) {
         <div className="absolute bottom-2 left-1/2 -translate-x-1/2 bg-black/30 backdrop-blur-sm text-white text-[9px] px-2.5 py-1 rounded-full">
           3Dアバター (Three.js)
         </div>
+        {/* User avatar PiP */}
+        <div className="absolute bottom-2 right-2 w-16 h-20 rounded-xl overflow-hidden border-2 border-white/60 shadow-lg flex flex-col items-center justify-center" style={{ background: userAvatar.color }}>
+          <span className="text-2xl">{userAvatar.emoji}</span>
+          <span className="text-[7px] text-gray-600 font-bold mt-0.5">{userAvatar.name}</span>
+        </div>
       </div>
       {/* Auto-save notification */}
       {saveNotice && (
@@ -1238,9 +1290,14 @@ function AvatarChatScreen({ onBack, theme }) {
             {msg.role === 'ai' && (
               <div className="w-7 h-7 rounded-full flex-shrink-0 flex items-center justify-center text-white text-[9px] font-bold mr-1.5 mt-1" style={{ background: aiColor }}>AI</div>
             )}
-            <div className={`max-w-[75%] rounded-2xl px-3 py-2 text-[12px] leading-relaxed ${msg.role === 'user' ? 'bg-[#06C755] text-white rounded-tr-sm' : 'bg-white text-gray-800 rounded-tl-sm shadow-sm'}`}>
+            <div className={`max-w-[70%] rounded-2xl px-3 py-2 text-[12px] leading-relaxed ${msg.role === 'user' ? 'bg-[#06C755] text-white rounded-tr-sm' : 'bg-white text-gray-800 rounded-tl-sm shadow-sm'}`}>
               {msg.text}
             </div>
+            {msg.role === 'user' && (
+              <div className="w-7 h-7 rounded-full flex-shrink-0 flex items-center justify-center text-base ml-1.5 mt-1" style={{ background: userAvatar.color }}>
+                {userAvatar.emoji}
+              </div>
+            )}
           </div>
         ))}
         {typing && (
