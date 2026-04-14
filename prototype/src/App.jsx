@@ -1,7 +1,9 @@
 import { useState, useEffect, useRef, useMemo } from 'react'
-import { Canvas, useFrame } from '@react-three/fiber'
+import { Canvas, useFrame, useLoader } from '@react-three/fiber'
 import { OrbitControls } from '@react-three/drei'
 import * as THREE from 'three'
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
+import { VRMLoaderPlugin, VRMUtils } from '@pixiv/three-vrm'
 import './index.css'
 
 function StatusBar() {
@@ -1080,14 +1082,182 @@ function AvatarHead({ talking }) {
   )
 }
 
-function AvatarScene({ talking }) {
+function VrmModel({ url, position, rotation, scale, talking, isCounselor }) {
+  const groupRef = useRef()
+  const vrmRef = useRef()
+  const mixerRef = useRef()
+
+  useEffect(() => {
+    let cancelled = false
+    const loader = new GLTFLoader()
+    loader.register((parser) => new VRMLoaderPlugin(parser))
+    loader.load(url, (gltf) => {
+      if (cancelled) return
+      const vrm = gltf.userData.vrm
+      if (!vrm) return
+      VRMUtils.removeUnnecessaryVertices(gltf.scene)
+      VRMUtils.combineSkeletons(gltf.scene)
+      // Disable automatic humanoid bone update so we can control bones manually
+      if (vrm.humanoid) {
+        vrm.humanoid.autoUpdateHumanBones = false
+      }
+      vrm.scene.traverse((obj) => {
+        if (obj.isMesh) {
+          obj.castShadow = true
+          obj.receiveShadow = true
+        }
+      })
+      // Clear any previous VRM
+      if (vrmRef.current) {
+        vrmRef.current.scene?.removeFromParent()
+      }
+      vrmRef.current = vrm
+      if (groupRef.current) {
+        groupRef.current.add(vrm.scene)
+      }
+    })
+    return () => {
+      cancelled = true
+      if (vrmRef.current) {
+        vrmRef.current.scene?.removeFromParent()
+        vrmRef.current = null
+      }
+    }
+  }, [url])
+
+  useFrame((state, delta) => {
+    if (mixerRef.current) mixerRef.current.update(delta)
+    if (vrmRef.current) {
+      const vrm = vrmRef.current
+      const t = state.clock.elapsedTime
+      // Expressions
+      if (talking && isCounselor && vrm.expressionManager) {
+        try { vrm.expressionManager.setValue('aa', 0.3 + Math.sin(t * 12) * 0.3) } catch (e) {}
+      } else if (isCounselor && vrm.expressionManager) {
+        try { vrm.expressionManager.setValue('aa', 0) } catch (e) {}
+      }
+      if (vrm.expressionManager) {
+        try {
+          const blinkCycle = (t + (isCounselor ? 0 : 1.5)) % 4
+          vrm.expressionManager.setValue('blink', (blinkCycle > 3.7 && blinkCycle < 3.85) ? 1 : 0)
+        } catch (e) {}
+      }
+      vrm.update(delta)
+      // Cache bones and initial rest quaternions once
+      if (!vrm._boneMap) {
+        vrm._boneMap = {}
+        vrm._boneRest = {}
+        vrm.scene.traverse((obj) => {
+          if (obj.isBone) {
+            vrm._boneMap[obj.name] = obj
+            vrm._boneRest[obj.name] = obj.quaternion.clone()
+          }
+        })
+        vrm._isUE = !!vrm._boneMap['upperarm_l']
+      }
+      const bm = vrm._boneMap
+      const br = vrm._boneRest
+      // Apply rotation relative to rest pose
+      const poseArm = (name, axis, angle) => {
+        if (bm[name] && br[name]) {
+          const q = new THREE.Quaternion().setFromAxisAngle(axis, angle)
+          bm[name].quaternion.copy(br[name]).premultiply(q)
+        }
+      }
+      if (vrm._isUE) {
+        // UE4 rig: Z-axis premultiply, flipped signs to go DOWN
+        poseArm('upperarm_l', new THREE.Vector3(0, 0, 1), 1.2)
+        poseArm('upperarm_r', new THREE.Vector3(0, 0, 1), -1.2)
+      } else {
+        // VRM/Unity rig
+        poseArm('J_Bip_L_UpperArm', new THREE.Vector3(0, 0, 1), -1.2)
+        poseArm('J_Bip_R_UpperArm', new THREE.Vector3(0, 0, 1), 1.2)
+        poseArm('J_Bip_L_LowerArm', new THREE.Vector3(0, 0, 1), -0.15)
+        poseArm('J_Bip_R_LowerArm', new THREE.Vector3(0, 0, 1), 0.15)
+      }
+      if (isCounselor) {
+        // Subtle head animation
+        const head = bm['J_Bip_C_Head'] || bm['head']
+        const headR = br['J_Bip_C_Head'] || br['head']
+        if (head && headR) {
+          const hq = new THREE.Quaternion().setFromEuler(new THREE.Euler(Math.sin(t * 0.8) * 0.03, 0, Math.sin(t * 0.5) * 0.02))
+          head.quaternion.copy(headR).premultiply(hq)
+        }
+      }
+    }
+  })
+
+  return <group ref={groupRef} position={position} rotation={rotation} scale={scale} />
+}
+
+function Sofa({ position, rotation, color = '#8B7355' }) {
   return (
-    <Canvas camera={{ position: [0, 1.5, 2.2], fov: 35 }} style={{ background: 'linear-gradient(180deg, #E8F0FE 0%, #F8FAFF 100%)' }}>
-      <ambientLight intensity={0.7} />
-      <directionalLight position={[3, 5, 4]} intensity={1} />
-      <directionalLight position={[-2, 3, -1]} intensity={0.3} color="#B5C7FF" />
-      <AvatarHead talking={talking} />
-      <OrbitControls enableZoom={false} enablePan={false} minPolarAngle={Math.PI / 3} maxPolarAngle={Math.PI / 2.2} target={[0, 1.4, 0]} />
+    <group position={position} rotation={rotation}>
+      {/* Seat cushion */}
+      <mesh position={[0, 0.25, 0]} castShadow receiveShadow>
+        <boxGeometry args={[0.7, 0.12, 0.5]} />
+        <meshStandardMaterial color={color} roughness={0.8} />
+      </mesh>
+      {/* Backrest */}
+      <mesh position={[0, 0.5, 0.22]} castShadow receiveShadow>
+        <boxGeometry args={[0.7, 0.4, 0.1]} />
+        <meshStandardMaterial color={color} roughness={0.8} />
+      </mesh>
+      {/* Left armrest */}
+      <mesh position={[-0.33, 0.35, 0]} castShadow receiveShadow>
+        <boxGeometry args={[0.08, 0.22, 0.45]} />
+        <meshStandardMaterial color={color} roughness={0.8} />
+      </mesh>
+      {/* Right armrest */}
+      <mesh position={[0.33, 0.35, 0]} castShadow receiveShadow>
+        <boxGeometry args={[0.08, 0.22, 0.45]} />
+        <meshStandardMaterial color={color} roughness={0.8} />
+      </mesh>
+      {/* Legs */}
+      {[[-0.28, 0.08, -0.18], [0.28, 0.08, -0.18], [-0.28, 0.08, 0.18], [0.28, 0.08, 0.18]].map((p, i) => (
+        <mesh key={i} position={p} castShadow>
+          <cylinderGeometry args={[0.025, 0.025, 0.16, 8]} />
+          <meshStandardMaterial color="#5C4033" roughness={0.7} />
+        </mesh>
+      ))}
+    </group>
+  )
+}
+
+function SmallTable({ position }) {
+  return (
+    <group position={position}>
+      <mesh position={[0, 0.32, 0]} castShadow receiveShadow>
+        <cylinderGeometry args={[0.22, 0.22, 0.03, 16]} />
+        <meshStandardMaterial color="#C4A882" roughness={0.6} />
+      </mesh>
+      <mesh position={[0, 0.16, 0]} castShadow>
+        <cylinderGeometry args={[0.03, 0.04, 0.32, 8]} />
+        <meshStandardMaterial color="#8B7355" roughness={0.7} />
+      </mesh>
+    </group>
+  )
+}
+
+function AvatarScene({ talking }) {
+  // Counselor face-to-face view. VRM model faces +Z by default, camera at +Z looking at model.
+  return (
+    <Canvas camera={{ position: [0, 1.5, 4.5], fov: 28, near: 0.1, far: 30 }} style={{ background: 'linear-gradient(180deg, #C8DEFF 0%, #E8F0FF 40%, #FFF8F2 100%)' }} shadows>
+      <ambientLight intensity={0.8} />
+      <directionalLight position={[2, 4, 3]} intensity={1.0} castShadow />
+      <directionalLight position={[-2, 3, -1]} intensity={0.3} color="#FFE0D0" />
+      <hemisphereLight args={['#B5D6FF', '#FFE8D6', 0.6]} />
+      <OrbitControls target={[0, 1.1, 0]} enableZoom={false} enablePan={false} enableRotate={false} />
+      {/* Floor */}
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0, 0]} receiveShadow>
+        <planeGeometry args={[10, 10]} />
+        <meshStandardMaterial color="#E8E0D8" roughness={0.9} />
+      </mesh>
+      {/* Furniture behind counselor */}
+      <Sofa position={[0, 0, -0.5]} rotation={[0, 0, 0]} color="#7B6B5E" />
+      <SmallTable position={[0.6, 0, 0.1]} />
+      {/* Counselor: faces +Z (toward camera) */}
+      <VrmModel url="./concierge.vrm" position={[0, 0, 0]} rotation={[0, 0, 0]} scale={[1, 1, 1]} talking={talking} isCounselor />
     </Canvas>
   )
 }
@@ -1256,80 +1426,77 @@ function AvatarChatScreen({ onBack, theme }) {
   }
 
   return (
-    <div className="flex flex-col h-full slide-enter">
-      <div className="flex items-center px-3 py-2.5 bg-white border-b border-gray-100">
-        <button onClick={onBack} className="p-1 mr-1">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={aiColor} strokeWidth="2"><path d="M15 18l-6-6 6-6"/></svg>
-        </button>
-        <div className="flex-1 text-center text-sm font-bold text-gray-800 truncate">AIカウンセラー ミライ</div>
-        <button onClick={() => setShowMinutes(true)} className="p-1" title="議事録を見る">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#666" strokeWidth="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6"/><path d="M16 13H8"/><path d="M16 17H8"/><path d="M10 9H8"/></svg>
-        </button>
-      </div>
-      <div className="h-[200px] flex-shrink-0 relative">
+    <div className="relative h-full w-full slide-enter overflow-hidden">
+      {/* Full-screen 3D scene */}
+      <div className="absolute inset-0">
         <AvatarScene talking={typing} />
-        <div className="absolute bottom-2 left-1/2 -translate-x-1/2 bg-black/30 backdrop-blur-sm text-white text-[9px] px-2.5 py-1 rounded-full">
-          3Dアバター (Three.js)
-        </div>
-        {/* User avatar PiP */}
-        <div className="absolute bottom-2 right-2 w-16 h-20 rounded-xl overflow-hidden border-2 border-white/60 shadow-lg flex flex-col items-center justify-center" style={{ background: userAvatar.color }}>
-          <span className="text-2xl">{userAvatar.emoji}</span>
-          <span className="text-[7px] text-gray-600 font-bold mt-0.5">{userAvatar.name}</span>
-        </div>
+      </div>
+      {/* Top bar overlay */}
+      <div className="absolute top-0 left-0 right-0 z-10 flex items-center px-3 py-2 bg-gradient-to-b from-black/40 to-transparent">
+        <button onClick={onBack} className="p-1 mr-1 bg-white/20 backdrop-blur-sm rounded-full">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2"><path d="M15 18l-6-6 6-6"/></svg>
+        </button>
+        <div className="flex-1 text-center text-sm font-bold text-white drop-shadow truncate">AIカウンセラー ミライ</div>
+        <button onClick={() => setShowMinutes(true)} className="p-1 bg-white/20 backdrop-blur-sm rounded-full" title="議事録を見る">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6"/><path d="M16 13H8"/><path d="M16 17H8"/><path d="M10 9H8"/></svg>
+        </button>
       </div>
       {/* Auto-save notification */}
       {saveNotice && (
-        <div className="absolute top-24 left-1/2 -translate-x-1/2 bg-black/70 backdrop-blur-sm text-white text-[10px] px-3 py-1.5 rounded-full z-10 flex items-center gap-1.5 fade-enter">
+        <div className="absolute top-12 left-1/2 -translate-x-1/2 bg-black/70 backdrop-blur-sm text-white text-[10px] px-3 py-1.5 rounded-full z-20 flex items-center gap-1.5 fade-enter">
           <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#02C39A" strokeWidth="3"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><path d="M22 4L12 14.01l-3-3"/></svg>
           会話履歴を暗号化保存しました
         </div>
       )}
-      <div ref={chatRef} className="flex-1 bg-gray-50 px-3 py-3 overflow-y-auto hide-scrollbar">
-        {messages.map((msg, i) => (
-          <div key={i} className={`flex mb-2.5 ${msg.role === 'user' ? 'justify-end' : 'justify-start'} bubble-enter`}>
-            {msg.role === 'ai' && (
-              <div className="w-7 h-7 rounded-full flex-shrink-0 flex items-center justify-center text-white text-[9px] font-bold mr-1.5 mt-1" style={{ background: aiColor }}>AI</div>
-            )}
-            <div className={`max-w-[70%] rounded-2xl px-3 py-2 text-[12px] leading-relaxed ${msg.role === 'user' ? 'bg-[#06C755] text-white rounded-tr-sm' : 'bg-white text-gray-800 rounded-tl-sm shadow-sm'}`}>
-              {msg.text}
-            </div>
-            {msg.role === 'user' && (
-              <div className="w-7 h-7 rounded-full flex-shrink-0 flex items-center justify-center text-base ml-1.5 mt-1" style={{ background: userAvatar.color }}>
-                {userAvatar.emoji}
+      {/* Bottom chat overlay */}
+      <div className="absolute bottom-0 left-0 right-0 z-10 flex flex-col" style={{ maxHeight: '45%' }}>
+        <div ref={chatRef} className="flex-1 px-3 py-2 overflow-y-auto hide-scrollbar">
+          {messages.map((msg, i) => (
+            <div key={i} className={`flex mb-2 ${msg.role === 'user' ? 'justify-end' : 'justify-start'} bubble-enter`}>
+              {msg.role === 'ai' && (
+                <div className="w-6 h-6 rounded-full flex-shrink-0 flex items-center justify-center text-white text-[8px] font-bold mr-1.5 mt-1 shadow" style={{ background: aiColor }}>AI</div>
+              )}
+              <div className={`max-w-[72%] rounded-2xl px-3 py-2 text-[12px] leading-relaxed shadow-lg ${msg.role === 'user' ? 'bg-[#06C755] text-white rounded-tr-sm' : 'bg-white/95 backdrop-blur-sm text-gray-800 rounded-tl-sm'}`}>
+                {msg.text}
               </div>
-            )}
-          </div>
-        ))}
-        {typing && (
-          <div className="flex justify-start mb-2 bubble-enter">
-            <div className="w-7 h-7 rounded-full flex-shrink-0 flex items-center justify-center text-white text-[9px] font-bold mr-1.5 mt-1" style={{ background: aiColor }}>AI</div>
-            <div className="bg-white rounded-2xl px-4 py-3 rounded-tl-sm shadow-sm flex gap-1">
-              <div className="w-2 h-2 bg-gray-300 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-              <div className="w-2 h-2 bg-gray-300 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-              <div className="w-2 h-2 bg-gray-300 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+              {msg.role === 'user' && (
+                <div className="w-6 h-6 rounded-full flex-shrink-0 flex items-center justify-center text-sm ml-1.5 mt-1 shadow" style={{ background: userAvatar.color }}>
+                  {userAvatar.emoji}
+                </div>
+              )}
             </div>
-          </div>
-        )}
-      </div>
-      <div className="bg-white border-t border-gray-100">
-        <div className="flex items-center justify-between px-3 py-1 border-b border-gray-50">
-          <div className="flex items-center gap-1">
-            <div className="w-1.5 h-1.5 rounded-full bg-green-500" />
-            <span className="text-[9px] text-gray-400">自動保存ON・暗号化・議事録自動生成中</span>
-          </div>
-          <button onClick={() => setShowMinutes(true)} className="text-[9px] text-purple-600 font-medium">議事録を見る →</button>
+          ))}
+          {typing && (
+            <div className="flex justify-start mb-2 bubble-enter">
+              <div className="w-6 h-6 rounded-full flex-shrink-0 flex items-center justify-center text-white text-[8px] font-bold mr-1.5 mt-1 shadow" style={{ background: aiColor }}>AI</div>
+              <div className="bg-white/95 backdrop-blur-sm rounded-2xl px-4 py-3 rounded-tl-sm shadow-lg flex gap-1">
+                <div className="w-2 h-2 bg-gray-300 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                <div className="w-2 h-2 bg-gray-300 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                <div className="w-2 h-2 bg-gray-300 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+              </div>
+            </div>
+          )}
         </div>
-        <div className="p-2 flex gap-2">
-          <input
-            value={input}
-            onChange={e => setInput(e.target.value)}
-            onKeyDown={e => e.key === 'Enter' && sendMessage()}
-            className="flex-1 bg-gray-100 rounded-full px-3.5 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-300"
-            placeholder="メッセージを入力..."
-          />
-          <button onClick={sendMessage} className="w-9 h-9 rounded-full text-white flex items-center justify-center flex-shrink-0" style={{ background: aiColor }}>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
-          </button>
+        <div className="bg-white/90 backdrop-blur-md border-t border-white/50">
+          <div className="flex items-center justify-between px-3 py-0.5">
+            <div className="flex items-center gap-1">
+              <div className="w-1.5 h-1.5 rounded-full bg-green-500" />
+              <span className="text-[8px] text-gray-500">暗号化・議事録自動生成中</span>
+            </div>
+            <button onClick={() => setShowMinutes(true)} className="text-[8px] text-purple-600 font-medium">議事録 →</button>
+          </div>
+          <div className="px-2 pb-2 pt-1 flex gap-2">
+            <input
+              value={input}
+              onChange={e => setInput(e.target.value)}
+              onKeyDown={e => e.key === 'Enter' && sendMessage()}
+              className="flex-1 bg-gray-100/80 rounded-full px-3.5 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-300"
+              placeholder="メッセージを入力..."
+            />
+            <button onClick={sendMessage} className="w-9 h-9 rounded-full text-white flex items-center justify-center flex-shrink-0 shadow-lg" style={{ background: aiColor }}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+            </button>
+          </div>
         </div>
       </div>
     </div>
