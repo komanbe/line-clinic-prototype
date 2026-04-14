@@ -1,4 +1,7 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef, useMemo } from 'react'
+import { Canvas, useFrame } from '@react-three/fiber'
+import { OrbitControls } from '@react-three/drei'
+import * as THREE from 'three'
 import './index.css'
 
 function StatusBar() {
@@ -661,11 +664,12 @@ function UTokyoChatScreen({ onNavigate }) {
           </div>
         </UTokyoBubble>
       </div>
-      <div className="bg-white border-t border-gray-100 p-3">
-        <div className="flex gap-2">
-          <button onClick={() => onNavigate('utokyo_sso')} className="flex-1 bg-[#00356B] text-white rounded-xl py-3 text-xs font-bold">📋 アンケート回答</button>
-          <button className="flex-1 bg-gray-100 text-gray-500 rounded-xl py-3 text-xs font-bold">❓ 研究について</button>
+      <div className="bg-white border-t border-gray-100 p-2.5">
+        <div className="flex gap-1.5 mb-1.5">
+          <button onClick={() => onNavigate('utokyo_sso')} className="flex-1 bg-[#00356B] text-white rounded-xl py-2.5 text-[10px] font-bold">📋 アンケート回答</button>
+          <button onClick={() => onNavigate('utokyo_survey')} className="flex-1 bg-amber-500 text-white rounded-xl py-2.5 text-[10px] font-bold">🔄 途中から再開</button>
         </div>
+        <button onClick={() => onNavigate('utokyo_avatar_chat')} className="w-full bg-gradient-to-r from-purple-500 to-indigo-600 text-white rounded-xl py-2.5 text-[10px] font-bold">🤖 AIアバターに相談する</button>
       </div>
     </>
   )
@@ -893,6 +897,366 @@ function UTokyoCompleteScreen({ onNavigate }) {
   )
 }
 
+// ===== 3D AI AVATAR =====
+
+function AvatarHead({ talking, mood }) {
+  const headRef = useRef()
+  const leftEyeRef = useRef()
+  const rightEyeRef = useRef()
+  const mouthRef = useRef()
+  const bodyRef = useRef()
+
+  const skinMat = useMemo(() => new THREE.MeshStandardMaterial({ color: '#FFD5B8', roughness: 0.7 }), [])
+  const hairMat = useMemo(() => new THREE.MeshStandardMaterial({ color: '#4A3728', roughness: 0.8 }), [])
+  const eyeMat = useMemo(() => new THREE.MeshStandardMaterial({ color: '#2C1810' }), [])
+  const mouthMat = useMemo(() => new THREE.MeshStandardMaterial({ color: '#E85D75' }), [])
+  const shirtMat = useMemo(() => new THREE.MeshStandardMaterial({ color: '#F0F4FF', roughness: 0.6 }), [])
+  const coatMat = useMemo(() => new THREE.MeshStandardMaterial({ color: '#FFFFFF', roughness: 0.5 }), [])
+  const glassMat = useMemo(() => new THREE.MeshStandardMaterial({ color: '#3A3A5C', metalness: 0.3 }), [])
+
+  useFrame((state) => {
+    const t = state.clock.elapsedTime
+    // Idle breathing
+    if (headRef.current) {
+      headRef.current.position.y = Math.sin(t * 1.5) * 0.02 + 1.65
+      headRef.current.rotation.z = Math.sin(t * 0.5) * 0.02
+    }
+    if (bodyRef.current) {
+      bodyRef.current.position.y = Math.sin(t * 1.5) * 0.01 + 0.7
+    }
+    // Blinking
+    const blinkCycle = t % 4
+    const blinkScale = blinkCycle > 3.8 && blinkCycle < 3.95 ? 0.1 : 1
+    if (leftEyeRef.current) leftEyeRef.current.scale.y = blinkScale
+    if (rightEyeRef.current) rightEyeRef.current.scale.y = blinkScale
+    // Talking mouth
+    if (mouthRef.current) {
+      if (talking) {
+        mouthRef.current.scale.y = 0.6 + Math.sin(t * 12) * 0.4
+        mouthRef.current.scale.x = 1 + Math.sin(t * 8) * 0.15
+      } else {
+        mouthRef.current.scale.y = 0.5
+        mouthRef.current.scale.x = 1
+      }
+    }
+  })
+
+  return (
+    <group>
+      {/* Body / torso */}
+      <group ref={bodyRef} position={[0, 0.7, 0]}>
+        {/* Shirt */}
+        <mesh material={shirtMat} position={[0, 0, 0]}>
+          <capsuleGeometry args={[0.28, 0.35, 8, 16]} />
+        </mesh>
+        {/* White coat */}
+        <mesh material={coatMat} position={[0, -0.05, 0.01]}>
+          <capsuleGeometry args={[0.32, 0.4, 8, 16]} />
+        </mesh>
+        {/* Shoulders / Arms */}
+        <mesh material={coatMat} position={[-0.38, 0.1, 0]}>
+          <capsuleGeometry args={[0.09, 0.3, 6, 8]} />
+        </mesh>
+        <mesh material={coatMat} position={[0.38, 0.1, 0]}>
+          <capsuleGeometry args={[0.09, 0.3, 6, 8]} />
+        </mesh>
+        {/* Hands */}
+        <mesh material={skinMat} position={[-0.38, -0.15, 0]}>
+          <sphereGeometry args={[0.07, 8, 8]} />
+        </mesh>
+        <mesh material={skinMat} position={[0.38, -0.15, 0]}>
+          <sphereGeometry args={[0.07, 8, 8]} />
+        </mesh>
+        {/* Neck */}
+        <mesh material={skinMat} position={[0, 0.35, 0]}>
+          <cylinderGeometry args={[0.08, 0.1, 0.12, 8]} />
+        </mesh>
+      </group>
+      {/* Head */}
+      <group ref={headRef} position={[0, 1.65, 0]}>
+        {/* Head sphere */}
+        <mesh material={skinMat}>
+          <sphereGeometry args={[0.3, 16, 16]} />
+        </mesh>
+        {/* Hair - top */}
+        <mesh material={hairMat} position={[0, 0.12, -0.02]}>
+          <sphereGeometry args={[0.31, 16, 12, 0, Math.PI * 2, 0, Math.PI * 0.55]} />
+        </mesh>
+        {/* Hair - sides */}
+        <mesh material={hairMat} position={[-0.22, 0, -0.08]} rotation={[0, 0, 0.3]}>
+          <boxGeometry args={[0.12, 0.35, 0.15]} />
+        </mesh>
+        <mesh material={hairMat} position={[0.22, 0, -0.08]} rotation={[0, 0, -0.3]}>
+          <boxGeometry args={[0.12, 0.35, 0.15]} />
+        </mesh>
+        {/* Eyes */}
+        <group ref={leftEyeRef} position={[-0.1, 0.03, 0.26]}>
+          {/* Eye white */}
+          <mesh>
+            <sphereGeometry args={[0.045, 8, 8]} />
+            <meshStandardMaterial color="white" />
+          </mesh>
+          {/* Pupil */}
+          <mesh material={eyeMat} position={[0, 0, 0.03]}>
+            <sphereGeometry args={[0.025, 8, 8]} />
+          </mesh>
+          {/* Highlight */}
+          <mesh position={[0.01, 0.015, 0.045]}>
+            <sphereGeometry args={[0.008, 6, 6]} />
+            <meshStandardMaterial color="white" emissive="white" emissiveIntensity={0.5} />
+          </mesh>
+        </group>
+        <group ref={rightEyeRef} position={[0.1, 0.03, 0.26]}>
+          <mesh>
+            <sphereGeometry args={[0.045, 8, 8]} />
+            <meshStandardMaterial color="white" />
+          </mesh>
+          <mesh material={eyeMat} position={[0, 0, 0.03]}>
+            <sphereGeometry args={[0.025, 8, 8]} />
+          </mesh>
+          <mesh position={[0.01, 0.015, 0.045]}>
+            <sphereGeometry args={[0.008, 6, 6]} />
+            <meshStandardMaterial color="white" emissive="white" emissiveIntensity={0.5} />
+          </mesh>
+        </group>
+        {/* Glasses */}
+        <mesh material={glassMat} position={[-0.1, 0.03, 0.28]}>
+          <torusGeometry args={[0.055, 0.008, 8, 16]} />
+        </mesh>
+        <mesh material={glassMat} position={[0.1, 0.03, 0.28]}>
+          <torusGeometry args={[0.055, 0.008, 8, 16]} />
+        </mesh>
+        <mesh material={glassMat} position={[0, 0.03, 0.3]}>
+          <boxGeometry args={[0.04, 0.006, 0.006]} />
+        </mesh>
+        {/* Nose */}
+        <mesh material={skinMat} position={[0, -0.04, 0.28]}>
+          <sphereGeometry args={[0.025, 6, 6]} />
+        </mesh>
+        {/* Mouth */}
+        <mesh ref={mouthRef} material={mouthMat} position={[0, -0.12, 0.26]}>
+          <sphereGeometry args={[0.04, 8, 8]} />
+        </mesh>
+        {/* Cheek blush */}
+        <mesh position={[-0.18, -0.05, 0.2]}>
+          <circleGeometry args={[0.04, 8]} />
+          <meshStandardMaterial color="#FFB5B5" transparent opacity={0.4} side={THREE.DoubleSide} />
+        </mesh>
+        <mesh position={[0.18, -0.05, 0.2]}>
+          <circleGeometry args={[0.04, 8]} />
+          <meshStandardMaterial color="#FFB5B5" transparent opacity={0.4} side={THREE.DoubleSide} />
+        </mesh>
+        {/* Eyebrows */}
+        <mesh material={hairMat} position={[-0.1, 0.1, 0.27]} rotation={[0, 0, 0.15]}>
+          <boxGeometry args={[0.07, 0.015, 0.01]} />
+        </mesh>
+        <mesh material={hairMat} position={[0.1, 0.1, 0.27]} rotation={[0, 0, -0.15]}>
+          <boxGeometry args={[0.07, 0.015, 0.01]} />
+        </mesh>
+      </group>
+    </group>
+  )
+}
+
+function AvatarScene({ talking }) {
+  return (
+    <Canvas camera={{ position: [0, 1.5, 2.2], fov: 35 }} style={{ background: 'linear-gradient(180deg, #E8F0FE 0%, #F8FAFF 100%)' }}>
+      <ambientLight intensity={0.7} />
+      <directionalLight position={[3, 5, 4]} intensity={1} />
+      <directionalLight position={[-2, 3, -1]} intensity={0.3} color="#B5C7FF" />
+      <AvatarHead talking={talking} />
+      <OrbitControls enableZoom={false} enablePan={false} minPolarAngle={Math.PI / 3} maxPolarAngle={Math.PI / 2.2} target={[0, 1.4, 0]} />
+    </Canvas>
+  )
+}
+
+function AvatarChatScreen({ onBack, theme }) {
+  const [messages, setMessages] = useState([
+    { role: 'ai', text: 'こんにちは。AIカウンセラーの「ミライ」です。何でもお気軽にご相談ください。あなたのお話をしっかり聴きますね。' }
+  ])
+  const [input, setInput] = useState('')
+  const [typing, setTyping] = useState(false)
+  const [showMinutes, setShowMinutes] = useState(false)
+  const [saveNotice, setSaveNotice] = useState(false)
+  const chatRef = useRef(null)
+  const msgCount = useRef(0)
+
+  const aiColor = theme === 'utokyo' ? '#00356B' : '#028090'
+
+  const aiResponses = [
+    'そうなんですね。もう少し詳しく教えていただけますか？無理のない範囲でかまいませんよ。',
+    'お話しいただきありがとうございます。それは大変でしたね。そのとき、どんなお気持ちでしたか？',
+    'なるほど。ストレスを感じているとき、何か自分なりの対処法はお持ちですか？',
+    '頑張りすぎていませんか？自分を大切にする時間も必要ですよ。最近、ゆっくり休めていますか？',
+    'お気持ち、よく分かります。一人で抱え込まないでくださいね。専門のカウンセラーへの相談もおすすめです。',
+    'それは辛い状況ですね。でも、こうしてお話しくださったこと自体がとても大きな一歩だと思います。',
+  ]
+
+  const sendMessage = () => {
+    if (!input.trim()) return
+    const userMsg = input.trim()
+    setMessages(prev => [...prev, { role: 'user', text: userMsg }])
+    setInput('')
+    setTyping(true)
+    msgCount.current += 1
+    // Auto-save notification every 2 user messages
+    if (msgCount.current % 2 === 0) {
+      setTimeout(() => { setSaveNotice(true); setTimeout(() => setSaveNotice(false), 2000) }, 500)
+    }
+    setTimeout(() => {
+      const resp = aiResponses[Math.floor(Math.random() * aiResponses.length)]
+      setMessages(prev => [...prev, { role: 'ai', text: resp }])
+      setTyping(false)
+    }, 1500 + Math.random() * 1000)
+  }
+
+  useEffect(() => {
+    if (chatRef.current) chatRef.current.scrollTop = chatRef.current.scrollHeight
+  }, [messages, typing])
+
+  if (showMinutes) {
+    return (
+      <div className="flex flex-col h-full slide-enter">
+        <LiffHeader title="AI議事録" onBack={() => setShowMinutes(false)} onClose={() => setShowMinutes(false)} />
+        <div className="flex-1 bg-gray-50 p-4 overflow-y-auto hide-scrollbar">
+          <div className="flex items-center gap-2 mb-3">
+            <div className="w-2 h-2 rounded-full bg-green-500" />
+            <span className="text-[10px] text-green-700 font-medium">AES-256暗号化済み</span>
+            <span className="text-[10px] text-gray-400 ml-auto">自動生成: {new Date().toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' })}</span>
+          </div>
+          <div className="bg-white rounded-2xl p-4 shadow-sm mb-3">
+            <div className="text-xs font-bold text-gray-800 mb-2">📋 相談議事録(自動生成)</div>
+            <div className="text-[10px] text-gray-400 mb-3">セッション: {new Date().toLocaleDateString('ja-JP')} | 匿名ID: ANM-{Math.random().toString(36).substring(2, 8).toUpperCase()}</div>
+            <div className="space-y-3">
+              <div>
+                <div className="text-[10px] font-bold text-gray-600 mb-1">主訴・相談内容</div>
+                <div className="text-xs text-gray-700 bg-gray-50 rounded-lg p-2.5">
+                  {messages.filter(m => m.role === 'user').length > 0
+                    ? messages.filter(m => m.role === 'user').map(m => m.text).join('。') + '。'
+                    : '(ユーザーの発言待ち)'}
+                </div>
+              </div>
+              <div>
+                <div className="text-[10px] font-bold text-gray-600 mb-1">AIカウンセラーの対応</div>
+                <div className="text-xs text-gray-700 bg-gray-50 rounded-lg p-2.5">
+                  傾聴ベースの対話を実施。共感的応答を通じて、相談者の感情の言語化を促進。必要に応じて専門カウンセラーへの接続を提案。
+                </div>
+              </div>
+              <div>
+                <div className="text-[10px] font-bold text-gray-600 mb-1">感情分析(AI推定)</div>
+                <div className="flex gap-2 flex-wrap">
+                  <span className="text-[10px] bg-blue-50 text-blue-700 px-2 py-0.5 rounded-full">不安: 中</span>
+                  <span className="text-[10px] bg-amber-50 text-amber-700 px-2 py-0.5 rounded-full">ストレス: やや高</span>
+                  <span className="text-[10px] bg-green-50 text-green-700 px-2 py-0.5 rounded-full">自己開示: 良好</span>
+                </div>
+              </div>
+              <div>
+                <div className="text-[10px] font-bold text-gray-600 mb-1">推奨アクション</div>
+                <div className="text-xs text-gray-700 bg-gray-50 rounded-lg p-2.5">
+                  ・専門カウンセラーとのセッション予約を推奨<br/>
+                  ・2週間以内のフォローアップ相談を提案<br/>
+                  ・セルフケアリソースの提供
+                </div>
+              </div>
+            </div>
+          </div>
+          <div className="bg-white rounded-2xl p-4 shadow-sm mb-3">
+            <div className="text-xs font-bold text-gray-800 mb-2">🔒 データ保護</div>
+            <div className="space-y-2">
+              <div className="flex items-center gap-2 text-[10px]">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#02C39A" strokeWidth="2.5"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><path d="M22 4L12 14.01l-3-3"/></svg>
+                <span className="text-gray-600">AES-256-GCMで暗号化保存</span>
+              </div>
+              <div className="flex items-center gap-2 text-[10px]">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#02C39A" strokeWidth="2.5"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><path d="M22 4L12 14.01l-3-3"/></svg>
+                <span className="text-gray-600">個人情報は自動的に匿名化(k-匿名性 ≥ 5)</span>
+              </div>
+              <div className="flex items-center gap-2 text-[10px]">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#02C39A" strokeWidth="2.5"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><path d="M22 4L12 14.01l-3-3"/></svg>
+                <span className="text-gray-600">担当医師のみ閲覧可能(匿名化済み)</span>
+              </div>
+              <div className="flex items-center gap-2 text-[10px]">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#02C39A" strokeWidth="2.5"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><path d="M22 4L12 14.01l-3-3"/></svg>
+                <span className="text-gray-600">90日後に自動削除(研究利用は統計のみ)</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div className="flex flex-col h-full slide-enter">
+      <div className="flex items-center px-3 py-2.5 bg-white border-b border-gray-100">
+        <button onClick={onBack} className="p-1 mr-1">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={aiColor} strokeWidth="2"><path d="M15 18l-6-6 6-6"/></svg>
+        </button>
+        <div className="flex-1 text-center text-sm font-bold text-gray-800 truncate">AIカウンセラー ミライ</div>
+        <button onClick={() => setShowMinutes(true)} className="p-1" title="議事録を見る">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#666" strokeWidth="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6"/><path d="M16 13H8"/><path d="M16 17H8"/><path d="M10 9H8"/></svg>
+        </button>
+      </div>
+      <div className="h-[200px] flex-shrink-0 relative">
+        <AvatarScene talking={typing} />
+        <div className="absolute bottom-2 left-1/2 -translate-x-1/2 bg-black/30 backdrop-blur-sm text-white text-[9px] px-2.5 py-1 rounded-full">
+          3Dアバター (Three.js)
+        </div>
+      </div>
+      {/* Auto-save notification */}
+      {saveNotice && (
+        <div className="absolute top-24 left-1/2 -translate-x-1/2 bg-black/70 backdrop-blur-sm text-white text-[10px] px-3 py-1.5 rounded-full z-10 flex items-center gap-1.5 fade-enter">
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#02C39A" strokeWidth="3"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><path d="M22 4L12 14.01l-3-3"/></svg>
+          会話履歴を暗号化保存しました
+        </div>
+      )}
+      <div ref={chatRef} className="flex-1 bg-gray-50 px-3 py-3 overflow-y-auto hide-scrollbar">
+        {messages.map((msg, i) => (
+          <div key={i} className={`flex mb-2.5 ${msg.role === 'user' ? 'justify-end' : 'justify-start'} bubble-enter`}>
+            {msg.role === 'ai' && (
+              <div className="w-7 h-7 rounded-full flex-shrink-0 flex items-center justify-center text-white text-[9px] font-bold mr-1.5 mt-1" style={{ background: aiColor }}>AI</div>
+            )}
+            <div className={`max-w-[75%] rounded-2xl px-3 py-2 text-[12px] leading-relaxed ${msg.role === 'user' ? 'bg-[#06C755] text-white rounded-tr-sm' : 'bg-white text-gray-800 rounded-tl-sm shadow-sm'}`}>
+              {msg.text}
+            </div>
+          </div>
+        ))}
+        {typing && (
+          <div className="flex justify-start mb-2 bubble-enter">
+            <div className="w-7 h-7 rounded-full flex-shrink-0 flex items-center justify-center text-white text-[9px] font-bold mr-1.5 mt-1" style={{ background: aiColor }}>AI</div>
+            <div className="bg-white rounded-2xl px-4 py-3 rounded-tl-sm shadow-sm flex gap-1">
+              <div className="w-2 h-2 bg-gray-300 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+              <div className="w-2 h-2 bg-gray-300 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+              <div className="w-2 h-2 bg-gray-300 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+            </div>
+          </div>
+        )}
+      </div>
+      <div className="bg-white border-t border-gray-100">
+        <div className="flex items-center justify-between px-3 py-1 border-b border-gray-50">
+          <div className="flex items-center gap-1">
+            <div className="w-1.5 h-1.5 rounded-full bg-green-500" />
+            <span className="text-[9px] text-gray-400">自動保存ON・暗号化・議事録自動生成中</span>
+          </div>
+          <button onClick={() => setShowMinutes(true)} className="text-[9px] text-purple-600 font-medium">議事録を見る →</button>
+        </div>
+        <div className="p-2 flex gap-2">
+          <input
+            value={input}
+            onChange={e => setInput(e.target.value)}
+            onKeyDown={e => e.key === 'Enter' && sendMessage()}
+            className="flex-1 bg-gray-100 rounded-full px-3.5 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-300"
+            placeholder="メッセージを入力..."
+          />
+          <button onClick={sendMessage} className="w-9 h-9 rounded-full text-white flex items-center justify-center flex-shrink-0" style={{ background: aiColor }}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 function UTokyoApp() {
   const [screen, setScreen] = useState('utokyo_chat')
   const [history, setHistory] = useState(['utokyo_chat'])
@@ -914,6 +1278,7 @@ function UTokyoApp() {
     utokyo_sso: <UTokyoSSOScreen onNavigate={navigate} onBack={goBack} />,
     utokyo_survey: <UTokyoSurveyScreen onNavigate={navigate} onBack={goBack} />,
     utokyo_complete: <UTokyoCompleteScreen onNavigate={navigate} />,
+    utokyo_avatar_chat: <AvatarChatScreen onBack={goBack} theme="utokyo" />,
   }
 
   return (
