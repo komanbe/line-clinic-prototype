@@ -609,9 +609,9 @@ function MedsScreen({ onBack }) {
 function UTokyoChatHeader() {
   return (
     <div className="flex items-center gap-3 px-4 py-2.5 bg-white border-b border-gray-100">
-      <div className="w-9 h-9 rounded-full bg-[#00356B] flex items-center justify-center text-white text-[8px] font-bold leading-tight text-center">東大</div>
+      <div className="w-9 h-9 rounded-full bg-[#00356B] flex items-center justify-center text-white text-[8px] font-bold leading-tight text-center">Well</div>
       <div className="flex-1">
-        <div className="font-bold text-sm text-gray-900">東大SSO研究調査</div>
+        <div className="font-bold text-sm text-gray-900">UTokyo Well</div>
         <div className="text-[10px] text-gray-400">公式アカウント</div>
       </div>
       <div className="flex gap-3 text-gray-400">
@@ -630,7 +630,7 @@ function UTokyoBubble({ children, delay = 0 }) {
   if (!show) return null
   return (
     <div className="flex justify-start mb-2 bubble-enter">
-      <div className="w-8 h-8 rounded-full bg-[#00356B] flex-shrink-0 flex items-center justify-center text-white text-[8px] font-bold mr-2 mt-1">東大</div>
+      <div className="w-8 h-8 rounded-full bg-[#00356B] flex-shrink-0 flex items-center justify-center text-white text-[8px] font-bold mr-2 mt-1">Well</div>
       <div className="max-w-[75%] rounded-2xl px-3.5 py-2.5 text-[13px] leading-relaxed bg-white text-gray-800 rounded-tl-sm shadow-sm">
         {children}
       </div>
@@ -645,9 +645,9 @@ function UTokyoChatScreen({ onNavigate }) {
       <div className="flex-1 bg-[#8CABD9] px-3 py-3 overflow-y-auto hide-scrollbar">
         <div className="text-center text-white/60 text-[10px] mb-3">4月15日(火)</div>
         <UTokyoBubble>
-          <div className="font-bold mb-1">こんにちは！🏫</div>
-          <div>東京大学 研究調査チームです。</div>
-          <div className="mt-1">メンタルヘルスに関する研究調査にご協力をお願いしています。</div>
+          <div className="font-bold mb-1">こんにちは！🌿</div>
+          <div>UTokyo Well へようこそ。</div>
+          <div className="mt-1">あなたのWell-beingをサポートする東京大学の公式プログラムです。</div>
         </UTokyoBubble>
         <UTokyoBubble delay={400}>
           <div className="bg-[#F0F5FF] rounded-xl p-3 -mx-1">
@@ -899,43 +899,48 @@ function UTokyoCompleteScreen({ onNavigate }) {
 
 // ===== 3D AI AVATAR =====
 
-function AvatarHead({ talking, mood }) {
+function AvatarHead({ talking }) {
   const headRef = useRef()
   const leftEyeRef = useRef()
   const rightEyeRef = useRef()
   const mouthRef = useRef()
   const bodyRef = useRef()
+  const leftEarRef = useRef()
+  const rightEarRef = useRef()
 
-  const skinMat = useMemo(() => new THREE.MeshStandardMaterial({ color: '#FFD5B8', roughness: 0.7 }), [])
-  const hairMat = useMemo(() => new THREE.MeshStandardMaterial({ color: '#4A3728', roughness: 0.8 }), [])
-  const eyeMat = useMemo(() => new THREE.MeshStandardMaterial({ color: '#2C1810' }), [])
-  const mouthMat = useMemo(() => new THREE.MeshStandardMaterial({ color: '#E85D75' }), [])
-  const shirtMat = useMemo(() => new THREE.MeshStandardMaterial({ color: '#F0F4FF', roughness: 0.6 }), [])
-  const coatMat = useMemo(() => new THREE.MeshStandardMaterial({ color: '#FFFFFF', roughness: 0.5 }), [])
-  const glassMat = useMemo(() => new THREE.MeshStandardMaterial({ color: '#3A3A5C', metalness: 0.3 }), [])
+  const furMat = useMemo(() => new THREE.MeshStandardMaterial({ color: '#FFF5EE', roughness: 0.9 }), [])
+  const innerEarMat = useMemo(() => new THREE.MeshStandardMaterial({ color: '#FFB5C5', roughness: 0.8 }), [])
+  const eyeMat = useMemo(() => new THREE.MeshStandardMaterial({ color: '#3A2520' }), [])
+  const noseMat = useMemo(() => new THREE.MeshStandardMaterial({ color: '#FFB5C5' }), [])
+  const mouthMat = useMemo(() => new THREE.MeshStandardMaterial({ color: '#FF8FA0' }), [])
+  const scarfMat = useMemo(() => new THREE.MeshStandardMaterial({ color: '#87CEEB', roughness: 0.6 }), [])
+  const padMat = useMemo(() => new THREE.MeshStandardMaterial({ color: '#FFE4E1', roughness: 0.8 }), [])
 
   useFrame((state) => {
     const t = state.clock.elapsedTime
-    // Idle breathing
+    // Idle bounce
     if (headRef.current) {
-      headRef.current.position.y = Math.sin(t * 1.5) * 0.02 + 1.65
-      headRef.current.rotation.z = Math.sin(t * 0.5) * 0.02
+      headRef.current.position.y = Math.sin(t * 2) * 0.03 + 1.55
+      headRef.current.rotation.z = Math.sin(t * 0.7) * 0.03
     }
     if (bodyRef.current) {
-      bodyRef.current.position.y = Math.sin(t * 1.5) * 0.01 + 0.7
+      bodyRef.current.position.y = Math.sin(t * 2) * 0.015 + 0.65
     }
+    // Ear wiggle
+    if (leftEarRef.current) leftEarRef.current.rotation.z = 0.15 + Math.sin(t * 1.2) * 0.05
+    if (rightEarRef.current) rightEarRef.current.rotation.z = -0.15 + Math.sin(t * 1.2 + 0.5) * 0.05
     // Blinking
-    const blinkCycle = t % 4
-    const blinkScale = blinkCycle > 3.8 && blinkCycle < 3.95 ? 0.1 : 1
+    const blinkCycle = t % 3.5
+    const blinkScale = blinkCycle > 3.2 && blinkCycle < 3.35 ? 0.1 : 1
     if (leftEyeRef.current) leftEyeRef.current.scale.y = blinkScale
     if (rightEyeRef.current) rightEyeRef.current.scale.y = blinkScale
     // Talking mouth
     if (mouthRef.current) {
       if (talking) {
-        mouthRef.current.scale.y = 0.6 + Math.sin(t * 12) * 0.4
-        mouthRef.current.scale.x = 1 + Math.sin(t * 8) * 0.15
+        mouthRef.current.scale.y = 0.7 + Math.sin(t * 10) * 0.3
+        mouthRef.current.scale.x = 1.1 + Math.sin(t * 7) * 0.1
       } else {
-        mouthRef.current.scale.y = 0.5
+        mouthRef.current.scale.y = 0.6
         mouthRef.current.scale.x = 1
       }
     }
@@ -943,115 +948,132 @@ function AvatarHead({ talking, mood }) {
 
   return (
     <group>
-      {/* Body / torso */}
-      <group ref={bodyRef} position={[0, 0.7, 0]}>
-        {/* Shirt */}
-        <mesh material={shirtMat} position={[0, 0, 0]}>
-          <capsuleGeometry args={[0.28, 0.35, 8, 16]} />
+      {/* Body */}
+      <group ref={bodyRef} position={[0, 0.65, 0]}>
+        {/* Round tummy */}
+        <mesh material={furMat}>
+          <sphereGeometry args={[0.35, 16, 16]} />
         </mesh>
-        {/* White coat */}
-        <mesh material={coatMat} position={[0, -0.05, 0.01]}>
-          <capsuleGeometry args={[0.32, 0.4, 8, 16]} />
+        {/* Belly patch */}
+        <mesh position={[0, -0.02, 0.28]}>
+          <sphereGeometry args={[0.2, 12, 12]} />
+          <meshStandardMaterial color="#FFFFFF" roughness={0.9} />
         </mesh>
-        {/* Shoulders / Arms */}
-        <mesh material={coatMat} position={[-0.38, 0.1, 0]}>
-          <capsuleGeometry args={[0.09, 0.3, 6, 8]} />
+        {/* Scarf */}
+        <mesh material={scarfMat} position={[0, 0.28, 0.05]}>
+          <torusGeometry args={[0.2, 0.06, 8, 16]} />
         </mesh>
-        <mesh material={coatMat} position={[0.38, 0.1, 0]}>
-          <capsuleGeometry args={[0.09, 0.3, 6, 8]} />
+        <mesh material={scarfMat} position={[0.12, 0.15, 0.18]} rotation={[0.3, 0, -0.5]}>
+          <boxGeometry args={[0.08, 0.2, 0.04]} />
         </mesh>
-        {/* Hands */}
-        <mesh material={skinMat} position={[-0.38, -0.15, 0]}>
-          <sphereGeometry args={[0.07, 8, 8]} />
+        {/* Arms */}
+        <mesh material={furMat} position={[-0.32, 0, 0.1]} rotation={[0, 0, 0.4]}>
+          <capsuleGeometry args={[0.08, 0.18, 6, 8]} />
         </mesh>
-        <mesh material={skinMat} position={[0.38, -0.15, 0]}>
-          <sphereGeometry args={[0.07, 8, 8]} />
+        <mesh material={furMat} position={[0.32, 0, 0.1]} rotation={[0, 0, -0.4]}>
+          <capsuleGeometry args={[0.08, 0.18, 6, 8]} />
         </mesh>
-        {/* Neck */}
-        <mesh material={skinMat} position={[0, 0.35, 0]}>
-          <cylinderGeometry args={[0.08, 0.1, 0.12, 8]} />
+        {/* Paw pads */}
+        <mesh material={padMat} position={[-0.38, -0.08, 0.15]}>
+          <sphereGeometry args={[0.055, 8, 8]} />
+        </mesh>
+        <mesh material={padMat} position={[0.38, -0.08, 0.15]}>
+          <sphereGeometry args={[0.055, 8, 8]} />
+        </mesh>
+        {/* Feet */}
+        <mesh material={furMat} position={[-0.15, -0.35, 0.1]}>
+          <sphereGeometry args={[0.1, 8, 8]} />
+        </mesh>
+        <mesh material={furMat} position={[0.15, -0.35, 0.1]}>
+          <sphereGeometry args={[0.1, 8, 8]} />
         </mesh>
       </group>
       {/* Head */}
-      <group ref={headRef} position={[0, 1.65, 0]}>
-        {/* Head sphere */}
-        <mesh material={skinMat}>
-          <sphereGeometry args={[0.3, 16, 16]} />
+      <group ref={headRef} position={[0, 1.55, 0]}>
+        {/* Head - slightly oval */}
+        <mesh material={furMat} scale={[1, 0.95, 0.9]}>
+          <sphereGeometry args={[0.32, 16, 16]} />
         </mesh>
-        {/* Hair - top */}
-        <mesh material={hairMat} position={[0, 0.12, -0.02]}>
-          <sphereGeometry args={[0.31, 16, 12, 0, Math.PI * 2, 0, Math.PI * 0.55]} />
-        </mesh>
-        {/* Hair - sides */}
-        <mesh material={hairMat} position={[-0.22, 0, -0.08]} rotation={[0, 0, 0.3]}>
-          <boxGeometry args={[0.12, 0.35, 0.15]} />
-        </mesh>
-        <mesh material={hairMat} position={[0.22, 0, -0.08]} rotation={[0, 0, -0.3]}>
-          <boxGeometry args={[0.12, 0.35, 0.15]} />
-        </mesh>
-        {/* Eyes */}
-        <group ref={leftEyeRef} position={[-0.1, 0.03, 0.26]}>
-          {/* Eye white */}
-          <mesh>
-            <sphereGeometry args={[0.045, 8, 8]} />
-            <meshStandardMaterial color="white" />
+        {/* Left ear */}
+        <group ref={leftEarRef} position={[-0.13, 0.35, -0.02]} rotation={[0, 0, 0.15]}>
+          <mesh material={furMat}>
+            <capsuleGeometry args={[0.06, 0.3, 6, 8]} />
           </mesh>
-          {/* Pupil */}
-          <mesh material={eyeMat} position={[0, 0, 0.03]}>
-            <sphereGeometry args={[0.025, 8, 8]} />
-          </mesh>
-          {/* Highlight */}
-          <mesh position={[0.01, 0.015, 0.045]}>
-            <sphereGeometry args={[0.008, 6, 6]} />
-            <meshStandardMaterial color="white" emissive="white" emissiveIntensity={0.5} />
+          <mesh material={innerEarMat} position={[0, 0, 0.03]} scale={[0.6, 0.85, 0.5]}>
+            <capsuleGeometry args={[0.05, 0.25, 6, 8]} />
           </mesh>
         </group>
-        <group ref={rightEyeRef} position={[0.1, 0.03, 0.26]}>
+        {/* Right ear */}
+        <group ref={rightEarRef} position={[0.13, 0.35, -0.02]} rotation={[0, 0, -0.15]}>
+          <mesh material={furMat}>
+            <capsuleGeometry args={[0.06, 0.3, 6, 8]} />
+          </mesh>
+          <mesh material={innerEarMat} position={[0, 0, 0.03]} scale={[0.6, 0.85, 0.5]}>
+            <capsuleGeometry args={[0.05, 0.25, 6, 8]} />
+          </mesh>
+        </group>
+        {/* Eyes - big cute round */}
+        <group ref={leftEyeRef} position={[-0.1, 0.02, 0.27]}>
           <mesh>
-            <sphereGeometry args={[0.045, 8, 8]} />
+            <sphereGeometry args={[0.05, 10, 10]} />
             <meshStandardMaterial color="white" />
           </mesh>
           <mesh material={eyeMat} position={[0, 0, 0.03]}>
-            <sphereGeometry args={[0.025, 8, 8]} />
+            <sphereGeometry args={[0.032, 10, 10]} />
           </mesh>
-          <mesh position={[0.01, 0.015, 0.045]}>
-            <sphereGeometry args={[0.008, 6, 6]} />
-            <meshStandardMaterial color="white" emissive="white" emissiveIntensity={0.5} />
+          <mesh position={[0.012, 0.018, 0.05]}>
+            <sphereGeometry args={[0.01, 6, 6]} />
+            <meshStandardMaterial color="white" emissive="white" emissiveIntensity={0.8} />
           </mesh>
         </group>
-        {/* Glasses */}
-        <mesh material={glassMat} position={[-0.1, 0.03, 0.28]}>
-          <torusGeometry args={[0.055, 0.008, 8, 16]} />
-        </mesh>
-        <mesh material={glassMat} position={[0.1, 0.03, 0.28]}>
-          <torusGeometry args={[0.055, 0.008, 8, 16]} />
-        </mesh>
-        <mesh material={glassMat} position={[0, 0.03, 0.3]}>
-          <boxGeometry args={[0.04, 0.006, 0.006]} />
-        </mesh>
-        {/* Nose */}
-        <mesh material={skinMat} position={[0, -0.04, 0.28]}>
-          <sphereGeometry args={[0.025, 6, 6]} />
+        <group ref={rightEyeRef} position={[0.1, 0.02, 0.27]}>
+          <mesh>
+            <sphereGeometry args={[0.05, 10, 10]} />
+            <meshStandardMaterial color="white" />
+          </mesh>
+          <mesh material={eyeMat} position={[0, 0, 0.03]}>
+            <sphereGeometry args={[0.032, 10, 10]} />
+          </mesh>
+          <mesh position={[0.012, 0.018, 0.05]}>
+            <sphereGeometry args={[0.01, 6, 6]} />
+            <meshStandardMaterial color="white" emissive="white" emissiveIntensity={0.8} />
+          </mesh>
+        </group>
+        {/* Nose - small triangle-ish */}
+        <mesh material={noseMat} position={[0, -0.06, 0.3]}>
+          <sphereGeometry args={[0.03, 6, 6]} />
         </mesh>
         {/* Mouth */}
-        <mesh ref={mouthRef} material={mouthMat} position={[0, -0.12, 0.26]}>
-          <sphereGeometry args={[0.04, 8, 8]} />
+        <group ref={mouthRef} position={[0, -0.12, 0.27]}>
+          <mesh material={mouthMat}>
+            <sphereGeometry args={[0.025, 8, 8]} />
+          </mesh>
+        </group>
+        {/* Whiskers */}
+        <mesh position={[-0.2, -0.06, 0.22]} rotation={[0, 0, 0.1]}>
+          <boxGeometry args={[0.12, 0.008, 0.003]} />
+          <meshStandardMaterial color="#DDD" />
+        </mesh>
+        <mesh position={[-0.2, -0.1, 0.22]} rotation={[0, 0, -0.05]}>
+          <boxGeometry args={[0.12, 0.008, 0.003]} />
+          <meshStandardMaterial color="#DDD" />
+        </mesh>
+        <mesh position={[0.2, -0.06, 0.22]} rotation={[0, 0, -0.1]}>
+          <boxGeometry args={[0.12, 0.008, 0.003]} />
+          <meshStandardMaterial color="#DDD" />
+        </mesh>
+        <mesh position={[0.2, -0.1, 0.22]} rotation={[0, 0, 0.05]}>
+          <boxGeometry args={[0.12, 0.008, 0.003]} />
+          <meshStandardMaterial color="#DDD" />
         </mesh>
         {/* Cheek blush */}
-        <mesh position={[-0.18, -0.05, 0.2]}>
-          <circleGeometry args={[0.04, 8]} />
-          <meshStandardMaterial color="#FFB5B5" transparent opacity={0.4} side={THREE.DoubleSide} />
+        <mesh position={[-0.18, -0.05, 0.22]}>
+          <circleGeometry args={[0.045, 10]} />
+          <meshStandardMaterial color="#FFB5C5" transparent opacity={0.35} side={THREE.DoubleSide} />
         </mesh>
-        <mesh position={[0.18, -0.05, 0.2]}>
-          <circleGeometry args={[0.04, 8]} />
-          <meshStandardMaterial color="#FFB5B5" transparent opacity={0.4} side={THREE.DoubleSide} />
-        </mesh>
-        {/* Eyebrows */}
-        <mesh material={hairMat} position={[-0.1, 0.1, 0.27]} rotation={[0, 0, 0.15]}>
-          <boxGeometry args={[0.07, 0.015, 0.01]} />
-        </mesh>
-        <mesh material={hairMat} position={[0.1, 0.1, 0.27]} rotation={[0, 0, -0.15]}>
-          <boxGeometry args={[0.07, 0.015, 0.01]} />
+        <mesh position={[0.18, -0.05, 0.22]}>
+          <circleGeometry args={[0.045, 10]} />
+          <meshStandardMaterial color="#FFB5C5" transparent opacity={0.35} side={THREE.DoubleSide} />
         </mesh>
       </group>
     </group>
@@ -1870,7 +1892,7 @@ function App() {
         </button>
         <button onClick={() => setMode('utokyo')}
           className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all ${mode === 'utokyo' ? 'bg-[#00356B] text-white shadow-lg shadow-[#00356B]/30' : 'bg-white/15 text-white/60 hover:bg-white/25'}`}>
-          🏫 UTokyo
+          🌿 UTokyo Well
         </button>
         <button onClick={() => setMode('admin')}
           className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all ${mode === 'admin' ? 'bg-[#1e293b] text-white shadow-lg shadow-[#1e293b]/30' : 'bg-white/15 text-white/60 hover:bg-white/25'}`}>
