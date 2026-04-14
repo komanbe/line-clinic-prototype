@@ -926,6 +926,538 @@ function UTokyoApp() {
   )
 }
 
+// ===== DOCTOR ADMIN DASHBOARD =====
+
+function AdminSidebar({ active, onNav }) {
+  const items = [
+    { key: 'dashboard', icon: '📊', label: 'ダッシュボード' },
+    { key: 'appointments', icon: '📅', label: '予約一覧' },
+    { key: 'patients', icon: '👥', label: '患者管理' },
+    { key: 'shift', icon: '🕐', label: 'シフト管理' },
+    { key: 'revenue', icon: '💰', label: '売上・実績' },
+    { key: 'settings', icon: '⚙️', label: '設定' },
+  ]
+  return (
+    <div className="w-56 bg-[#1e293b] text-white flex flex-col flex-shrink-0">
+      <div className="px-4 py-5 border-b border-white/10">
+        <div className="flex items-center gap-2">
+          <div className="w-8 h-8 bg-[#028090] rounded-lg flex items-center justify-center text-sm font-bold">XR</div>
+          <div>
+            <div className="text-sm font-bold">XRメンタル</div>
+            <div className="text-[10px] text-gray-400">医師管理画面</div>
+          </div>
+        </div>
+      </div>
+      <div className="flex-1 py-3">
+        {items.map(item => (
+          <button key={item.key} onClick={() => onNav(item.key)}
+            className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm transition ${active === item.key ? 'bg-white/10 text-white font-bold' : 'text-gray-400 hover:bg-white/5 hover:text-gray-200'}`}>
+            <span className="text-base">{item.icon}</span>
+            {item.label}
+          </button>
+        ))}
+      </div>
+      <div className="px-4 py-4 border-t border-white/10">
+        <div className="flex items-center gap-2">
+          <div className="w-8 h-8 rounded-full bg-gray-600 flex items-center justify-center text-lg">👨‍⚕️</div>
+          <div>
+            <div className="text-xs font-bold">田中 太郎</div>
+            <div className="text-[10px] text-gray-400">精神科医</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function AdminDashboard() {
+  const stats = [
+    { label: '本日の予約', value: '8', sub: '件', color: 'bg-[#028090]', change: '+2 from yesterday' },
+    { label: '待機中の患者', value: '2', sub: '名', color: 'bg-amber-500', change: '次: 14:30〜' },
+    { label: '今月の診察数', value: '67', sub: '件', color: 'bg-blue-500', change: '前月比 +12%' },
+    { label: '今月の報酬(税前)', value: '¥584K', sub: '', color: 'bg-emerald-500', change: '基本+成果報酬' },
+  ]
+  const upcoming = [
+    { time: '14:30', name: '山田 花子', type: 'じっくり相談', duration: '20分', status: 'waiting', avatar: '👩' },
+    { time: '15:00', name: '佐藤 一郎', type: 'お薬の処方', duration: '10分', status: 'confirmed', avatar: '👨' },
+    { time: '15:30', name: '鈴木 美咲', type: 'カウンセリング', duration: '30分', status: 'confirmed', avatar: '👩' },
+    { time: '16:30', name: '高橋 健太', type: '診断書・書類', duration: '15分', status: 'confirmed', avatar: '👨' },
+    { time: '17:00', name: '渡辺 優子', type: 'じっくり相談', duration: '20分', status: 'confirmed', avatar: '👩' },
+  ]
+
+  return (
+    <div className="p-6 overflow-y-auto hide-scrollbar">
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h1 className="text-xl font-bold text-gray-800">ダッシュボード</h1>
+          <p className="text-sm text-gray-400 mt-0.5">2026年4月15日(火) 14:22</p>
+        </div>
+        <button className="bg-[#028090] text-white px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2">
+          📹 ビデオ通話を開始
+        </button>
+      </div>
+      <div className="grid grid-cols-4 gap-4 mb-6">
+        {stats.map((s, i) => (
+          <div key={i} className="bg-white rounded-xl p-4 shadow-sm">
+            <div className="text-xs text-gray-400 mb-2">{s.label}</div>
+            <div className="flex items-baseline gap-1">
+              <span className="text-2xl font-bold text-gray-800">{s.value}</span>
+              <span className="text-sm text-gray-500">{s.sub}</span>
+            </div>
+            <div className="text-[10px] text-gray-400 mt-1">{s.change}</div>
+            <div className={`h-1 ${s.color} rounded-full mt-2 opacity-60`} style={{ width: '60%' }} />
+          </div>
+        ))}
+      </div>
+      <div className="grid grid-cols-3 gap-4">
+        <div className="col-span-2 bg-white rounded-xl p-5 shadow-sm">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-sm font-bold text-gray-800">本日の予約</h2>
+            <span className="text-xs text-gray-400">5件</span>
+          </div>
+          <div className="space-y-2">
+            {upcoming.map((apt, i) => (
+              <div key={i} className={`flex items-center gap-3 p-3 rounded-lg transition ${apt.status === 'waiting' ? 'bg-amber-50 border border-amber-200' : 'bg-gray-50 hover:bg-gray-100'}`}>
+                <div className="text-sm font-bold text-gray-600 w-12">{apt.time}</div>
+                <div className="w-9 h-9 rounded-full bg-gray-200 flex items-center justify-center text-lg">{apt.avatar}</div>
+                <div className="flex-1">
+                  <div className="text-sm font-medium text-gray-800">{apt.name}</div>
+                  <div className="text-[10px] text-gray-400">{apt.type} / {apt.duration}</div>
+                </div>
+                {apt.status === 'waiting' ? (
+                  <button className="bg-[#028090] text-white px-3 py-1.5 rounded-lg text-xs font-bold">通話開始</button>
+                ) : (
+                  <span className="text-[10px] text-gray-400 bg-gray-100 px-2 py-1 rounded-full">予約確定</span>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+        <div className="space-y-4">
+          <div className="bg-white rounded-xl p-5 shadow-sm">
+            <h2 className="text-sm font-bold text-gray-800 mb-3">Google Calendar同期</h2>
+            <div className="flex items-center gap-2 mb-3">
+              <div className="w-2 h-2 rounded-full bg-green-500" />
+              <span className="text-xs text-gray-600">同期中</span>
+              <span className="text-[10px] text-gray-400 ml-auto">最終: 2分前</span>
+            </div>
+            <div className="bg-gray-50 rounded-lg p-3 space-y-2">
+              <div className="flex items-center justify-between text-xs">
+                <span className="text-gray-500">今週のシフト</span>
+                <span className="font-medium text-gray-700">月〜金 14:00-22:00</span>
+              </div>
+              <div className="flex items-center justify-between text-xs">
+                <span className="text-gray-500">来週の空き</span>
+                <span className="font-medium text-[#028090]">32枠</span>
+              </div>
+            </div>
+            <button className="w-full mt-3 border-2 border-gray-200 rounded-lg py-2 text-xs text-gray-500 font-medium hover:border-[#028090] hover:text-[#028090] transition">Calendarを開く</button>
+          </div>
+          <div className="bg-white rounded-xl p-5 shadow-sm">
+            <h2 className="text-sm font-bold text-gray-800 mb-3">直近の通知</h2>
+            <div className="space-y-2">
+              {[
+                { text: '山田花子さんが待機中です', time: '2分前', color: 'text-amber-600' },
+                { text: '佐藤一郎さんの問診が完了', time: '15分前', color: 'text-blue-600' },
+                { text: '新しいレビューが届きました', time: '1時間前', color: 'text-green-600' },
+              ].map((n, i) => (
+                <div key={i} className="flex items-start gap-2">
+                  <div className={`w-1.5 h-1.5 rounded-full mt-1.5 flex-shrink-0 ${n.color.replace('text-', 'bg-')}`} />
+                  <div>
+                    <div className="text-xs text-gray-700">{n.text}</div>
+                    <div className="text-[10px] text-gray-400">{n.time}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function AdminAppointments() {
+  const [filter, setFilter] = useState('today')
+  const appointments = [
+    { id: 'XR-0415-001', date: '4/15', time: '14:30', name: '山田 花子', type: 'じっくり相談', duration: '20分', status: 'waiting', avatar: '👩', questionnaire: true },
+    { id: 'XR-0415-002', date: '4/15', time: '15:00', name: '佐藤 一郎', type: 'お薬の処方', duration: '10分', status: 'confirmed', avatar: '👨', questionnaire: true },
+    { id: 'XR-0415-003', date: '4/15', time: '15:30', name: '鈴木 美咲', type: 'カウンセリング', duration: '30分', status: 'confirmed', avatar: '👩', questionnaire: false },
+    { id: 'XR-0415-004', date: '4/15', time: '16:30', name: '高橋 健太', type: '診断書・書類', duration: '15分', status: 'confirmed', avatar: '👨', questionnaire: true },
+    { id: 'XR-0415-005', date: '4/15', time: '17:00', name: '渡辺 優子', type: 'じっくり相談', duration: '20分', status: 'confirmed', avatar: '👩', questionnaire: true },
+    { id: 'XR-0415-006', date: '4/15', time: '20:00', name: '中村 大輔', type: 'お薬の処方', duration: '10分', status: 'confirmed', avatar: '👨', questionnaire: false },
+    { id: 'XR-0415-007', date: '4/15', time: '20:30', name: '小林 あかり', type: 'じっくり相談', duration: '20分', status: 'confirmed', avatar: '👩', questionnaire: true },
+    { id: 'XR-0415-008', date: '4/15', time: '21:00', name: '伊藤 翔太', type: 'カウンセリング', duration: '30分', status: 'confirmed', avatar: '👨', questionnaire: true },
+  ]
+
+  const statusBadge = (s) => {
+    if (s === 'waiting') return <span className="text-[10px] bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full font-medium">待機中</span>
+    if (s === 'done') return <span className="text-[10px] bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-medium">完了</span>
+    return <span className="text-[10px] bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full font-medium">確定</span>
+  }
+
+  return (
+    <div className="p-6 overflow-y-auto hide-scrollbar">
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-xl font-bold text-gray-800">予約一覧</h1>
+        <div className="flex gap-2">
+          {[['today', '今日'], ['week', '今週'], ['all', 'すべて']].map(([k, l]) => (
+            <button key={k} onClick={() => setFilter(k)}
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition ${filter === k ? 'bg-[#028090] text-white' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}>{l}</button>
+          ))}
+        </div>
+      </div>
+      <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+        <table className="w-full">
+          <thead>
+            <tr className="bg-gray-50 border-b border-gray-100">
+              <th className="text-left text-[10px] font-bold text-gray-400 uppercase px-4 py-3">予約ID</th>
+              <th className="text-left text-[10px] font-bold text-gray-400 uppercase px-4 py-3">時間</th>
+              <th className="text-left text-[10px] font-bold text-gray-400 uppercase px-4 py-3">患者名</th>
+              <th className="text-left text-[10px] font-bold text-gray-400 uppercase px-4 py-3">相談内容</th>
+              <th className="text-left text-[10px] font-bold text-gray-400 uppercase px-4 py-3">問診</th>
+              <th className="text-left text-[10px] font-bold text-gray-400 uppercase px-4 py-3">ステータス</th>
+              <th className="text-left text-[10px] font-bold text-gray-400 uppercase px-4 py-3">操作</th>
+            </tr>
+          </thead>
+          <tbody>
+            {appointments.map((apt, i) => (
+              <tr key={i} className={`border-b border-gray-50 ${apt.status === 'waiting' ? 'bg-amber-50/50' : 'hover:bg-gray-50'}`}>
+                <td className="px-4 py-3 text-xs font-mono text-gray-400">{apt.id}</td>
+                <td className="px-4 py-3 text-sm font-medium text-gray-700">{apt.time}</td>
+                <td className="px-4 py-3">
+                  <div className="flex items-center gap-2">
+                    <span className="text-lg">{apt.avatar}</span>
+                    <span className="text-sm text-gray-800">{apt.name}</span>
+                  </div>
+                </td>
+                <td className="px-4 py-3">
+                  <span className="text-xs bg-[#028090]/10 text-[#028090] px-2 py-0.5 rounded-full">{apt.type}</span>
+                  <span className="text-[10px] text-gray-400 ml-1">{apt.duration}</span>
+                </td>
+                <td className="px-4 py-3">
+                  {apt.questionnaire ? (
+                    <button className="text-xs text-blue-600 hover:underline">確認する</button>
+                  ) : (
+                    <span className="text-[10px] text-gray-400">未回答</span>
+                  )}
+                </td>
+                <td className="px-4 py-3">{statusBadge(apt.status)}</td>
+                <td className="px-4 py-3">
+                  {apt.status === 'waiting' ? (
+                    <button className="bg-[#028090] text-white px-3 py-1.5 rounded-lg text-xs font-bold">📹 通話開始</button>
+                  ) : (
+                    <button className="text-xs text-gray-400 hover:text-gray-600">詳細</button>
+                  )}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  )
+}
+
+function AdminPatients() {
+  const patients = [
+    { name: '山田 花子', age: 28, gender: '女性', visits: 5, lastVisit: '4/15', condition: 'うつ病', meds: 'セルトラリン 50mg', avatar: '👩' },
+    { name: '佐藤 一郎', age: 35, gender: '男性', visits: 12, lastVisit: '4/15', condition: '不安障害', meds: 'エスシタロプラム 10mg', avatar: '👨' },
+    { name: '鈴木 美咲', age: 22, gender: '女性', visits: 3, lastVisit: '4/12', condition: '適応障害', meds: 'なし(カウンセリング)', avatar: '👩' },
+    { name: '高橋 健太', age: 41, gender: '男性', visits: 8, lastVisit: '4/10', condition: 'ADHD', meds: 'コンサータ 18mg', avatar: '👨' },
+    { name: '渡辺 優子', age: 31, gender: '女性', visits: 2, lastVisit: '4/8', condition: 'パニック障害', meds: 'アルプラゾラム 0.4mg', avatar: '👩' },
+    { name: '中村 大輔', age: 45, gender: '男性', visits: 15, lastVisit: '4/5', condition: '不眠症', meds: 'エスゾピクロン 2mg', avatar: '👨' },
+  ]
+
+  return (
+    <div className="p-6 overflow-y-auto hide-scrollbar">
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-xl font-bold text-gray-800">患者管理</h1>
+        <div className="flex items-center gap-3">
+          <div className="relative">
+            <input className="bg-white border border-gray-200 rounded-lg pl-8 pr-3 py-2 text-sm w-64 focus:outline-none focus:border-[#028090]" placeholder="患者名で検索..." />
+            <svg className="absolute left-2.5 top-2.5 text-gray-400" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+          </div>
+        </div>
+      </div>
+      <div className="grid grid-cols-2 gap-4">
+        {patients.map((p, i) => (
+          <div key={i} className="bg-white rounded-xl p-5 shadow-sm hover:shadow-md transition">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center text-2xl">{p.avatar}</div>
+              <div className="flex-1">
+                <div className="font-bold text-gray-800">{p.name}</div>
+                <div className="text-xs text-gray-400">{p.age}歳 {p.gender} / 来院{p.visits}回</div>
+              </div>
+              <button className="text-xs text-[#028090] font-medium hover:underline">カルテ</button>
+            </div>
+            <div className="bg-gray-50 rounded-lg p-3 space-y-1.5">
+              <div className="flex justify-between text-xs">
+                <span className="text-gray-400">診断</span>
+                <span className="font-medium text-gray-700">{p.condition}</span>
+              </div>
+              <div className="flex justify-between text-xs">
+                <span className="text-gray-400">処方</span>
+                <span className="font-medium text-gray-700">{p.meds}</span>
+              </div>
+              <div className="flex justify-between text-xs">
+                <span className="text-gray-400">最終来院</span>
+                <span className="font-medium text-gray-700">{p.lastVisit}</span>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+function AdminShift() {
+  const days = ['月', '火', '水', '木', '金', '土', '日']
+  const dates = [14, 15, 16, 17, 18, 19, 20]
+  const hours = Array.from({ length: 15 }, (_, i) => i + 8)
+  const shifts = [
+    { day: 1, start: 14, end: 22 },
+    { day: 2, start: 14, end: 22 },
+    { day: 3, start: 14, end: 22 },
+    { day: 4, start: 14, end: 22 },
+    { day: 5, start: 9, end: 17 },
+  ]
+
+  return (
+    <div className="p-6 overflow-y-auto hide-scrollbar">
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-xl font-bold text-gray-800">シフト管理</h1>
+        <div className="flex gap-2">
+          <button className="bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-600">← 前週</button>
+          <button className="bg-[#028090] text-white rounded-lg px-4 py-2 text-sm font-bold">4月14日〜20日</button>
+          <button className="bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-600">翌週 →</button>
+        </div>
+      </div>
+      <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+        <div className="grid grid-cols-8 border-b border-gray-100">
+          <div className="p-3 text-[10px] text-gray-400 font-bold">時間</div>
+          {days.map((d, i) => (
+            <div key={i} className={`p-3 text-center ${i === 1 ? 'bg-[#028090]/5' : ''}`}>
+              <div className="text-[10px] text-gray-400">{d}</div>
+              <div className={`text-sm font-bold ${i === 1 ? 'text-[#028090]' : 'text-gray-700'}`}>{dates[i]}</div>
+            </div>
+          ))}
+        </div>
+        <div className="max-h-80 overflow-y-auto hide-scrollbar">
+          {hours.map(h => (
+            <div key={h} className="grid grid-cols-8 border-b border-gray-50">
+              <div className="p-2 text-xs text-gray-400 text-right pr-3">{h}:00</div>
+              {days.map((_, di) => {
+                const shift = shifts.find(s => s.day === di && h >= s.start && h < s.end)
+                const isBooking = shift && (h === 14 || h === 15 || h === 16 || h === 17 || h === 20 || h === 21) && di === 1
+                return (
+                  <div key={di} className={`p-1 border-l border-gray-50 min-h-[32px] ${di === 1 ? 'bg-[#028090]/5' : ''}`}>
+                    {shift && (
+                      <div className={`h-full rounded text-[8px] px-1 flex items-center ${isBooking ? 'bg-[#028090] text-white' : 'bg-[#028090]/10 text-[#028090]'}`}>
+                        {isBooking ? '予約あり' : '空き'}
+                      </div>
+                    )}
+                  </div>
+                )
+              })}
+            </div>
+          ))}
+        </div>
+      </div>
+      <div className="mt-4 flex gap-3">
+        <div className="flex items-center gap-2 text-xs text-gray-500"><div className="w-3 h-3 rounded bg-[#028090]/10" /> 空き枠</div>
+        <div className="flex items-center gap-2 text-xs text-gray-500"><div className="w-3 h-3 rounded bg-[#028090]" /> 予約あり</div>
+        <div className="flex items-center gap-2 text-xs text-gray-500"><div className="w-3 h-3 rounded bg-gray-100" /> シフト外</div>
+        <button className="ml-auto text-xs text-[#028090] font-medium hover:underline flex items-center gap-1">
+          <span>📅</span> Google Calendarと同期
+        </button>
+      </div>
+    </div>
+  )
+}
+
+function AdminRevenue() {
+  const months = [
+    { month: '1月', base: 200, perf: 85, total: 285 },
+    { month: '2月', base: 200, perf: 120, total: 320 },
+    { month: '3月', base: 200, perf: 156, total: 356 },
+    { month: '4月', base: 200, perf: 184, total: 384 },
+  ]
+  const maxTotal = Math.max(...months.map(m => m.total))
+  const breakdown = [
+    { label: '基本報酬(固定)', value: '¥200,000', desc: '月額固定' },
+    { label: 'お薬の処方(10分)', value: '¥2,500/件', desc: '今月: 28件 = ¥70,000' },
+    { label: 'じっくり相談(20分)', value: '¥4,500/件', desc: '今月: 15件 = ¥67,500' },
+    { label: 'カウンセリング(30分)', value: '¥6,000/件', desc: '今月: 5件 = ¥30,000' },
+    { label: '診断書・書類(15分)', value: '¥3,500/件', desc: '今月: 4件 = ¥14,000' },
+    { label: 'レビュー高評価ボーナス', value: '¥500/件', desc: '今月: 5件 = ¥2,500' },
+  ]
+
+  return (
+    <div className="p-6 overflow-y-auto hide-scrollbar">
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-xl font-bold text-gray-800">売上・実績</h1>
+        <select className="bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-600">
+          <option>2026年</option>
+        </select>
+      </div>
+      <div className="grid grid-cols-3 gap-4 mb-6">
+        <div className="bg-white rounded-xl p-5 shadow-sm">
+          <div className="text-xs text-gray-400 mb-1">今月の報酬合計</div>
+          <div className="text-3xl font-bold text-gray-800">¥384,000</div>
+          <div className="text-xs text-green-600 mt-1">↑ 7.8% vs 前月</div>
+        </div>
+        <div className="bg-white rounded-xl p-5 shadow-sm">
+          <div className="text-xs text-gray-400 mb-1">今月の診察件数</div>
+          <div className="text-3xl font-bold text-gray-800">52<span className="text-sm text-gray-400 ml-1">件</span></div>
+          <div className="text-xs text-green-600 mt-1">↑ 12% vs 前月</div>
+        </div>
+        <div className="bg-white rounded-xl p-5 shadow-sm">
+          <div className="text-xs text-gray-400 mb-1">患者満足度</div>
+          <div className="text-3xl font-bold text-gray-800">4.8<span className="text-sm text-gray-400 ml-1">/ 5.0</span></div>
+          <div className="text-xs text-gray-400 mt-1">レビュー 38件</div>
+        </div>
+      </div>
+      <div className="grid grid-cols-2 gap-4">
+        <div className="bg-white rounded-xl p-5 shadow-sm">
+          <h2 className="text-sm font-bold text-gray-800 mb-4">月次推移</h2>
+          <div className="flex items-end gap-3 h-40">
+            {months.map((m, i) => (
+              <div key={i} className="flex-1 flex flex-col items-center gap-1">
+                <div className="text-[10px] font-bold text-gray-700">¥{m.total}K</div>
+                <div className="w-full flex flex-col-reverse rounded-t-lg overflow-hidden" style={{ height: `${(m.total / maxTotal) * 100}%` }}>
+                  <div className="bg-[#028090]" style={{ height: `${(m.base / m.total) * 100}%` }} />
+                  <div className="bg-[#02C39A]" style={{ height: `${(m.perf / m.total) * 100}%` }} />
+                </div>
+                <div className="text-[10px] text-gray-400">{m.month}</div>
+              </div>
+            ))}
+          </div>
+          <div className="flex gap-4 mt-3 justify-center">
+            <div className="flex items-center gap-1 text-[10px] text-gray-500"><div className="w-2.5 h-2.5 rounded bg-[#028090]" /> 基本</div>
+            <div className="flex items-center gap-1 text-[10px] text-gray-500"><div className="w-2.5 h-2.5 rounded bg-[#02C39A]" /> 成果</div>
+          </div>
+        </div>
+        <div className="bg-white rounded-xl p-5 shadow-sm">
+          <h2 className="text-sm font-bold text-gray-800 mb-4">報酬内訳(今月)</h2>
+          <div className="space-y-2.5">
+            {breakdown.map((b, i) => (
+              <div key={i} className="flex items-center justify-between">
+                <div>
+                  <div className="text-xs text-gray-700">{b.label}</div>
+                  <div className="text-[10px] text-gray-400">{b.desc}</div>
+                </div>
+                <div className="text-xs font-bold text-gray-800">{b.value}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function AdminSettings() {
+  return (
+    <div className="p-6 overflow-y-auto hide-scrollbar">
+      <h1 className="text-xl font-bold text-gray-800 mb-6">設定</h1>
+      <div className="max-w-2xl space-y-4">
+        <div className="bg-white rounded-xl p-5 shadow-sm">
+          <h2 className="text-sm font-bold text-gray-800 mb-4">プロフィール</h2>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="text-xs font-bold text-gray-500 mb-1 block">氏名</label>
+              <input className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm" defaultValue="田中 太郎" />
+            </div>
+            <div>
+              <label className="text-xs font-bold text-gray-500 mb-1 block">専門</label>
+              <input className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm" defaultValue="うつ・不安障害" />
+            </div>
+            <div>
+              <label className="text-xs font-bold text-gray-500 mb-1 block">出身大学</label>
+              <input className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm" defaultValue="東京大学" />
+            </div>
+            <div>
+              <label className="text-xs font-bold text-gray-500 mb-1 block">得意タグ</label>
+              <input className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm" defaultValue="ビジネス" />
+            </div>
+          </div>
+        </div>
+        <div className="bg-white rounded-xl p-5 shadow-sm">
+          <h2 className="text-sm font-bold text-gray-800 mb-4">連携サービス</h2>
+          <div className="space-y-3">
+            <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+              <div className="flex items-center gap-3">
+                <span className="text-xl">📅</span>
+                <div>
+                  <div className="text-sm font-medium text-gray-800">Google Calendar</div>
+                  <div className="text-[10px] text-green-600">接続済み</div>
+                </div>
+              </div>
+              <button className="text-xs text-red-500 hover:underline">解除</button>
+            </div>
+            <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+              <div className="flex items-center gap-3">
+                <span className="text-xl">💳</span>
+                <div>
+                  <div className="text-sm font-medium text-gray-800">Stripe (報酬受取)</div>
+                  <div className="text-[10px] text-green-600">接続済み</div>
+                </div>
+              </div>
+              <button className="text-xs text-red-500 hover:underline">解除</button>
+            </div>
+            <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+              <div className="flex items-center gap-3">
+                <span className="text-xl">📹</span>
+                <div>
+                  <div className="text-sm font-medium text-gray-800">Cloudflare Calls</div>
+                  <div className="text-[10px] text-green-600">有効</div>
+                </div>
+              </div>
+              <span className="text-[10px] text-gray-400">自動設定</span>
+            </div>
+          </div>
+        </div>
+        <div className="bg-white rounded-xl p-5 shadow-sm">
+          <h2 className="text-sm font-bold text-gray-800 mb-4">通知設定</h2>
+          <div className="space-y-3">
+            {['予約確定時にLINE通知', '患者待機時にブラウザ通知', '問診完了時にメール通知', '日次レポートメール'].map((item, i) => (
+              <div key={i} className="flex items-center justify-between">
+                <span className="text-sm text-gray-700">{item}</span>
+                <div className={`w-10 h-6 rounded-full p-0.5 cursor-pointer transition ${i < 3 ? 'bg-[#028090]' : 'bg-gray-300'}`}>
+                  <div className={`w-5 h-5 bg-white rounded-full shadow transition-transform ${i < 3 ? 'translate-x-4' : ''}`} />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function DoctorAdminApp() {
+  const [page, setPage] = useState('dashboard')
+  const pages = {
+    dashboard: <AdminDashboard />,
+    appointments: <AdminAppointments />,
+    patients: <AdminPatients />,
+    shift: <AdminShift />,
+    revenue: <AdminRevenue />,
+    settings: <AdminSettings />,
+  }
+
+  return (
+    <div className="w-[960px] h-[640px] bg-gray-100 rounded-2xl overflow-hidden shadow-2xl flex">
+      <AdminSidebar active={page} onNav={setPage} />
+      <div className="flex-1 flex flex-col overflow-hidden">
+        {pages[page]}
+      </div>
+    </div>
+  )
+}
+
 // ===== MAIN APP =====
 
 function App() {
@@ -975,21 +1507,29 @@ function App() {
           className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all ${mode === 'utokyo' ? 'bg-[#00356B] text-white shadow-lg shadow-[#00356B]/30' : 'bg-white/15 text-white/60 hover:bg-white/25'}`}>
           🏫 UTokyo
         </button>
+        <button onClick={() => setMode('admin')}
+          className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all ${mode === 'admin' ? 'bg-[#1e293b] text-white shadow-lg shadow-[#1e293b]/30' : 'bg-white/15 text-white/60 hover:bg-white/25'}`}>
+          🩺 医師管理
+        </button>
       </div>
-      <div className="phone-frame">
-        <div className="phone-screen">
-          {mode === 'clinic' ? (
-            <>
-              <StatusBar />
-              <div className="flex-1 flex flex-col overflow-hidden">
-                {screens[screen]}
-              </div>
-            </>
-          ) : (
-            <UTokyoApp />
-          )}
+      {mode === 'admin' ? (
+        <DoctorAdminApp />
+      ) : (
+        <div className="phone-frame">
+          <div className="phone-screen">
+            {mode === 'clinic' ? (
+              <>
+                <StatusBar />
+                <div className="flex-1 flex flex-col overflow-hidden">
+                  {screens[screen]}
+                </div>
+              </>
+            ) : (
+              <UTokyoApp />
+            )}
+          </div>
         </div>
-      </div>
+      )}
     </div>
   )
 }
