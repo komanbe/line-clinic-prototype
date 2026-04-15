@@ -464,11 +464,120 @@ function BookingDoneScreen({ onNavigate, context }) {
           </div>
           <div className="text-xs text-gray-500">予約ID: XR-2026-04180001</div>
         </div>
-        <div className="bg-[#06C755]/10 rounded-xl p-3 w-full text-xs text-[#06C755] text-center">LINEで予約確認メッセージをお送りしました</div>
+        <div className="bg-[#06C755]/10 rounded-xl p-3 w-full text-xs text-[#06C755] text-center mb-3">LINEで予約確認メッセージをお送りしました</div>
+        <div className="bg-blue-50 rounded-xl p-3 w-full text-xs text-blue-700 text-center">
+          <span className="font-bold">🔔 診察時間になりましたら</span><br/>LINEで通知をお送りします
+        </div>
       </div>
       <div className="p-4 bg-white border-t border-gray-100 space-y-2">
-        <button onClick={() => onNavigate('video_call', context)} className="w-full py-3.5 rounded-xl bg-[#028090] text-white text-sm font-bold">📹 ビデオ通話へ進む（デモ）</button>
-        <button onClick={() => onNavigate('chat')} className="w-full py-3 rounded-xl border-2 border-gray-200 text-sm text-gray-500 font-medium">トップに戻る</button>
+        <button onClick={() => onNavigate('waiting_notify', context)} className="w-full py-3.5 rounded-xl bg-[#028090] text-white text-sm font-bold">トップに戻る</button>
+      </div>
+    </div>
+  )
+}
+
+function WaitingNotifyScreen({ onNavigate, context }) {
+  const [showNotif, setShowNotif] = useState(false)
+  const [showBanner, setShowBanner] = useState(false)
+
+  useEffect(() => {
+    const t1 = setTimeout(() => setShowNotif(true), 2000)
+    const t2 = setTimeout(() => setShowBanner(true), 2500)
+    return () => { clearTimeout(t1); clearTimeout(t2) }
+  }, [])
+
+  return (
+    <div className="flex flex-col h-full">
+      <ChatHeader />
+      <div className="flex-1 bg-[#8CABD9] relative overflow-hidden">
+        {/* Chat messages background */}
+        <div className="p-4 space-y-3">
+          <div className="text-center text-xs text-white/70 mb-2">{new Date().toLocaleDateString('ja-JP', { month: 'long', day: 'numeric', weekday: 'short' })}</div>
+          <div className="flex gap-2">
+            <div className="w-8 h-8 rounded-full bg-[#06C755] flex items-center justify-center text-white text-[8px] font-bold flex-shrink-0">XR</div>
+            <div className="bg-white rounded-2xl rounded-tl-sm px-3 py-2 max-w-[75%] shadow-sm">
+              <div className="text-xs text-gray-800 leading-relaxed">
+                <span className="font-bold">予約が確定しました</span><br/>
+                {context?.doctor?.name || '田中 太郎'}先生<br/>
+                {context?.date} {context?.time}〜<br/>
+                <span className="text-gray-400 text-[10px]">予約ID: XR-2026-04180001</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Notification overlay - appears after delay */}
+        {showNotif && (
+          <div className="absolute top-4 left-3 right-3 z-30 fade-enter">
+            <div className="bg-white rounded-2xl shadow-2xl overflow-hidden border border-gray-100">
+              <div className="flex items-center gap-2 px-3 py-2 bg-gray-50 border-b border-gray-100">
+                <div className="w-5 h-5 rounded-md bg-[#06C755] flex items-center justify-center">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="white"><path d="M19.365 9.863c.349 0 .63.285.63.631 0 .345-.281.63-.63.63H17.61v1.125h1.755c.349 0 .63.283.63.63 0 .344-.281.629-.63.629h-2.386a.63.63 0 01-.63-.629V8.108a.63.63 0 01.63-.63h2.386a.63.63 0 01.63.63.63.63 0 01-.63.631H17.61v1.125h1.755zM13.857 12.878a.628.628 0 01.63.629.63.63 0 01-.63.63.627.627 0 01-.532-.292l-1.965-3.063v2.726a.627.627 0 01-.63.629.629.629 0 01-.63-.629V8.108a.629.629 0 01.63-.63c.221 0 .425.116.533.292l1.964 3.062V8.108a.63.63 0 011.26 0v4.141a.63.63 0 01-.63.629zM8.816 12.249h-1.1V8.108a.631.631 0 00-1.26 0v4.77c0 .346.282.629.63.629h1.73a.63.63 0 000-1.258zM5.648 12.878a.63.63 0 01-.63.629.63.63 0 01-.63-.629V8.108a.63.63 0 011.26 0v4.77z"/></svg>
+                </div>
+                <span className="text-[10px] text-gray-500 font-medium flex-1">LINE</span>
+                <span className="text-[10px] text-gray-400">今</span>
+              </div>
+              <button onClick={() => onNavigate('call_ready', context)} className="w-full text-left px-3 py-3 hover:bg-gray-50 transition">
+                <div className="text-xs font-bold text-gray-800 mb-0.5">XRメンタルクリニック</div>
+                <div className="text-[11px] text-gray-600">🔔 まもなく診察の時間です。{context?.doctor?.name || '田中 太郎'}先生が待機中です。タップして通話を開始してください。</div>
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Vibration indicator */}
+        {showBanner && (
+          <div className="absolute bottom-6 left-0 right-0 flex justify-center fade-enter">
+            <div className="bg-black/70 text-white text-[10px] px-4 py-2 rounded-full flex items-center gap-2">
+              <span className="animate-pulse">📳</span>
+              通知が届きました
+            </div>
+          </div>
+        )}
+      </div>
+      <RichMenu onNavigate={onNavigate} />
+    </div>
+  )
+}
+
+function CallReadyScreen({ onNavigate, onBack, context }) {
+  return (
+    <div className="flex flex-col h-full slide-enter">
+      <LiffHeader title="オンライン診察" onBack={onBack} onClose={onBack} />
+      <div className="flex-1 bg-white flex flex-col items-center justify-center p-6">
+        <div className="w-24 h-24 rounded-full bg-gray-100 flex items-center justify-center text-5xl mb-4 fade-enter">
+          {context?.doctor?.avatar || "👨‍⚕️"}
+        </div>
+        <h2 className="text-lg font-bold text-gray-800 mb-1">{context?.doctor?.name || "田中 太郎"}先生</h2>
+        <p className="text-xs text-gray-400 mb-4">{context?.doctor?.specialty || "精神科・心療内科"}</p>
+        <div className="bg-green-50 rounded-2xl p-4 w-full mb-4 text-center">
+          <div className="flex items-center justify-center gap-2 mb-2">
+            <div className="w-2.5 h-2.5 rounded-full bg-green-500 animate-pulse" />
+            <span className="text-sm font-bold text-green-700">先生が待機中です</span>
+          </div>
+          <p className="text-[10px] text-green-600">通話を開始すると、ビデオ診察が始まります</p>
+        </div>
+        <div className="w-full space-y-2 text-[10px] text-gray-400">
+          <div className="flex items-center gap-2">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><path d="M22 4L12 14.01l-3-3"/></svg>
+            カメラ・マイクへのアクセスを許可してください
+          </div>
+          <div className="flex items-center gap-2">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            通話はエンドツーエンドで暗号化されます
+          </div>
+          <div className="flex items-center gap-2">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+            診察時間: 約{context?.time || '10分'}
+          </div>
+        </div>
+      </div>
+      <div className="p-4 bg-white border-t border-gray-100 space-y-2">
+        <button onClick={() => onNavigate('video_call', context)} className="w-full py-4 rounded-2xl bg-[#06C755] text-white text-base font-bold flex items-center justify-center gap-2 shadow-lg shadow-[#06C755]/30">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg>
+          通話を開始する
+        </button>
+        <button onClick={onBack} className="w-full py-3 rounded-xl text-sm text-gray-400">あとで参加する</button>
       </div>
     </div>
   )
@@ -2100,6 +2209,8 @@ function App() {
     personal_info: <PersonalInfoScreen onNavigate={navigate} onBack={goBack} context={context} />,
     insurance: <InsuranceScreen onNavigate={navigate} onBack={goBack} context={context} />,
     booking_done: <BookingDoneScreen onNavigate={navigate} context={context} />,
+    waiting_notify: <WaitingNotifyScreen onNavigate={navigate} context={context} />,
+    call_ready: <CallReadyScreen onNavigate={navigate} onBack={goBack} context={context} />,
     video_call: <VideoCallScreen onNavigate={navigate} context={context} />,
     payment: <PaymentScreen onNavigate={navigate} onBack={goBack} context={context} />,
     payment_done: <PaymentDoneScreen onNavigate={navigate} />,
