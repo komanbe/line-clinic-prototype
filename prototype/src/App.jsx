@@ -2181,10 +2181,36 @@ function DoctorAdminApp() {
 // ===== MAIN APP =====
 
 function App() {
-  const [mode, setMode] = useState('clinic')
+  const initialMode = (() => {
+    if (typeof window === 'undefined') return 'clinic'
+    const h = window.location.hash.replace('#', '').toLowerCase()
+    if (h === 'utokyo' || h === 'well') return 'utokyo'
+    if (h === 'admin' || h === 'doctor') return 'admin'
+    return 'clinic'
+  })()
+  const [mode, setMode] = useState(initialMode)
   const [screen, setScreen] = useState('chat')
   const [history, setHistory] = useState(['chat'])
   const [context, setContext] = useState({})
+
+  useEffect(() => {
+    const onHashChange = () => {
+      const h = window.location.hash.replace('#', '').toLowerCase()
+      if (h === 'utokyo' || h === 'well') setMode('utokyo')
+      else if (h === 'admin' || h === 'doctor') setMode('admin')
+      else if (h === 'clinic' || h === '') setMode('clinic')
+    }
+    window.addEventListener('hashchange', onHashChange)
+    return () => window.removeEventListener('hashchange', onHashChange)
+  }, [])
+
+  const changeMode = (m) => {
+    setMode(m)
+    const newHash = m === 'clinic' ? '' : `#${m}`
+    if (typeof window !== 'undefined' && window.location.hash !== newHash) {
+      window.history.replaceState(null, '', newHash || window.location.pathname)
+    }
+  }
 
   const navigate = (target, ctx) => {
     if (ctx) setContext(prev => ({ ...prev, ...ctx }))
@@ -2221,15 +2247,15 @@ function App() {
   return (
     <div className="flex flex-col items-center gap-3">
       <div className="flex gap-2">
-        <button onClick={() => setMode('clinic')}
+        <button onClick={() => changeMode('clinic')}
           className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all ${mode === 'clinic' ? 'bg-[#028090] text-white shadow-lg shadow-[#028090]/30' : 'bg-white/15 text-white/60 hover:bg-white/25'}`}>
           🏥 Clinic
         </button>
-        <button onClick={() => setMode('utokyo')}
+        <button onClick={() => changeMode('utokyo')}
           className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all ${mode === 'utokyo' ? 'bg-[#00356B] text-white shadow-lg shadow-[#00356B]/30' : 'bg-white/15 text-white/60 hover:bg-white/25'}`}>
           🌿 UTokyo Well
         </button>
-        <button onClick={() => setMode('admin')}
+        <button onClick={() => changeMode('admin')}
           className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all ${mode === 'admin' ? 'bg-[#1e293b] text-white shadow-lg shadow-[#1e293b]/30' : 'bg-white/15 text-white/60 hover:bg-white/25'}`}>
           🩺 医師管理
         </button>
