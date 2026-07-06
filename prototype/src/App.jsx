@@ -764,14 +764,14 @@ function UTokyoChatScreen({ onNavigate }) {
           <div className="bg-[#F0F5FF] rounded-xl p-3 -mx-1">
             <div className="text-[#00356B] font-bold text-sm mb-1">📋 研究調査のお願い</div>
             <div className="text-xs text-gray-600 mb-1">所要時間：約15分</div>
-            <div className="text-xs text-gray-600 mb-2">回答完了でAmazonギフト券500円分をプレゼント！</div>
+            <div className="text-xs text-gray-600 mb-2">回答完了でAmazonギフト券1,000円分をプレゼント！</div>
             <button onClick={() => onNavigate('utokyo_sso')} className="w-full bg-[#00356B] text-white rounded-full py-2.5 text-sm font-bold">アンケートに回答する</button>
           </div>
         </UTokyoBubble>
         <UTokyoBubble delay={800}>
           <div className="text-xs text-gray-500">
             ※ 回答は匿名化され研究目的のみに使用されます<br/>
-            ※ 途中保存が可能です
+            ※ 途中保存が可能です。未完了の場合はLINEでリマインドをお送りします
           </div>
         </UTokyoBubble>
       </div>
@@ -898,7 +898,7 @@ function UTokyoSurveyScreen({ onNavigate, onBack }) {
 
   const handleNext = () => {
     if (isLastQ && isLastSection) {
-      onNavigate('utokyo_complete')
+      onNavigate('utokyo_recontact')
     } else if (isLastQ) {
       setSaved(true)
       setTimeout(() => { setSaved(false); setSection(section + 1); setQIndex(0) }, 1000)
@@ -974,7 +974,56 @@ function UTokyoSurveyScreen({ onNavigate, onBack }) {
   )
 }
 
-function UTokyoCompleteScreen({ onNavigate }) {
+function UTokyoRecontactScreen({ onNavigate, onConsent }) {
+  const choose = (consent) => {
+    onConsent(consent)
+    onNavigate('utokyo_complete')
+  }
+  return (
+    <div className="flex flex-col h-full slide-enter">
+      <LiffHeader title="研究への継続協力" />
+      <div className="flex-1 bg-gray-50 p-5 overflow-y-auto hide-scrollbar">
+        <div className="text-center mb-4 fade-enter">
+          <div className="w-16 h-16 mx-auto mb-3 bg-[#00356B]/5 rounded-full flex items-center justify-center text-3xl">🤝</div>
+          <h2 className="text-lg font-bold text-gray-800 mb-1">再連絡への同意（任意）</h2>
+          <p className="text-xs text-gray-500 leading-relaxed">今後の研究にご協力いただける場合、<br/>LINEでご案内をお送りします</p>
+        </div>
+        <div className="bg-white rounded-2xl p-4 shadow-sm space-y-3 mb-3">
+          <div className="flex gap-3">
+            <span className="text-xl flex-shrink-0">🧪</span>
+            <div>
+              <div className="text-xs font-bold text-gray-800 mb-0.5">新しい治療プログラムの優先案内</div>
+              <div className="text-[11px] text-gray-500 leading-relaxed">開発中のメンタルヘルス治療プログラム（治験）にいち早く参加できます</div>
+            </div>
+          </div>
+          <div className="flex gap-3">
+            <span className="text-xl flex-shrink-0">📊</span>
+            <div>
+              <div className="text-xs font-bold text-gray-800 mb-0.5">謝礼付き追跡調査のご案内</div>
+              <div className="text-[11px] text-gray-500 leading-relaxed">年2〜3回程度、謝礼付きのフォローアップ調査をご案内します</div>
+            </div>
+          </div>
+          <div className="flex gap-3">
+            <span className="text-xl flex-shrink-0">🔒</span>
+            <div>
+              <div className="text-xs font-bold text-gray-800 mb-0.5">いつでも解除できます</div>
+              <div className="text-[11px] text-gray-500 leading-relaxed">ご案内はLINEで届きます。配信停止はいつでも可能です</div>
+            </div>
+          </div>
+        </div>
+        <div className="bg-[#00356B]/5 rounded-xl p-3 text-[11px] text-[#00356B] text-center leading-relaxed">
+          同意は任意です。同意しなくても謝礼は受け取れます。<br/>回答内容の研究利用への影響もありません
+        </div>
+      </div>
+      <div className="p-4 bg-white border-t border-gray-100 space-y-2">
+        <button onClick={() => choose(true)} className="w-full py-3.5 rounded-xl bg-[#00356B] text-white text-sm font-bold">同意して案内を受け取る</button>
+        <button onClick={() => choose(false)} className="w-full py-3 rounded-xl text-sm text-gray-400 font-medium">今回は同意しない</button>
+      </div>
+    </div>
+  )
+}
+
+function UTokyoCompleteScreen({ onNavigate, recontact }) {
   const [revealed, setRevealed] = useState(false)
   return (
     <div className="flex flex-col h-full">
@@ -986,7 +1035,7 @@ function UTokyoCompleteScreen({ onNavigate }) {
         <p className="text-sm text-gray-500 mb-4">ご協力ありがとうございました</p>
         <div className="w-full bg-gradient-to-r from-[#FF9900] to-[#FFB84D] rounded-2xl p-5 mb-4 text-center">
           <div className="text-white text-xs font-bold mb-2">🎉 Amazonギフト券</div>
-          <div className="text-white text-3xl font-bold mb-2">500円分</div>
+          <div className="text-white text-3xl font-bold mb-2">1,000円分</div>
           {revealed ? (
             <div className="bg-white rounded-xl p-3 fade-enter">
               <div className="text-[10px] text-gray-400 mb-1">ギフトコード</div>
@@ -997,6 +1046,9 @@ function UTokyoCompleteScreen({ onNavigate }) {
           )}
         </div>
         <div className="w-full space-y-2">
+          {recontact && (
+            <div className="bg-[#02C39A]/10 rounded-xl p-3 text-xs text-[#028090] text-center">🤝 継続協力に登録しました — 治験・追跡調査のご案内をLINEでお送りします</div>
+          )}
           <div className="bg-[#00356B]/5 rounded-xl p-3 text-xs text-[#00356B] text-center">📊 あなたの回答は匿名化されて研究に活用されます</div>
           <div className="bg-[#06C755]/10 rounded-xl p-3 text-xs text-[#06C755] text-center">✅ ギフトコードはLINEにも送信しました</div>
         </div>
@@ -1615,6 +1667,7 @@ function AvatarChatScreen({ onBack, theme }) {
 function UTokyoApp() {
   const [screen, setScreen] = useState('utokyo_chat')
   const [history, setHistory] = useState(['utokyo_chat'])
+  const [recontact, setRecontact] = useState(false)
 
   const navigate = (target) => {
     setHistory(prev => [...prev, target])
@@ -1632,7 +1685,8 @@ function UTokyoApp() {
     utokyo_chat: <UTokyoChatScreen onNavigate={navigate} />,
     utokyo_sso: <UTokyoSSOScreen onNavigate={navigate} onBack={goBack} />,
     utokyo_survey: <UTokyoSurveyScreen onNavigate={navigate} onBack={goBack} />,
-    utokyo_complete: <UTokyoCompleteScreen onNavigate={navigate} />,
+    utokyo_recontact: <UTokyoRecontactScreen onNavigate={navigate} onConsent={setRecontact} />,
+    utokyo_complete: <UTokyoCompleteScreen onNavigate={navigate} recontact={recontact} />,
     utokyo_avatar_chat: <AvatarChatScreen onBack={goBack} theme="utokyo" />,
   }
 
@@ -2178,6 +2232,368 @@ function DoctorAdminApp() {
   )
 }
 
+// ===== RESEARCH PLATFORM ADMIN (BiPSEE調査基盤) =====
+
+function ResearchSidebar({ active, onNav }) {
+  const items = [
+    { key: 'dashboard', icon: '📊', label: 'ダッシュボード' },
+    { key: 'projects', icon: '📋', label: '調査案件' },
+    { key: 'panel', icon: '👥', label: 'パネル管理' },
+    { key: 'recruit', icon: '🧪', label: '治験リクルート' },
+  ]
+  return (
+    <div className="w-56 bg-[#00356B] text-white flex flex-col flex-shrink-0">
+      <div className="px-4 py-5 border-b border-white/10">
+        <div className="flex items-center gap-2">
+          <div className="w-8 h-8 bg-white/15 rounded-lg flex items-center justify-center text-sm font-bold">Bi</div>
+          <div>
+            <div className="text-sm font-bold">BiPSEE調査基盤</div>
+            <div className="text-[10px] text-blue-200">キャンパスウェルビーイング</div>
+          </div>
+        </div>
+      </div>
+      <div className="flex-1 py-3">
+        {items.map(item => (
+          <button key={item.key} onClick={() => onNav(item.key)}
+            className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm transition ${active === item.key ? 'bg-white/10 text-white font-bold' : 'text-blue-200 hover:bg-white/5 hover:text-white'}`}>
+            <span>{item.icon}</span>{item.label}
+          </button>
+        ))}
+      </div>
+      <div className="px-4 py-4 border-t border-white/10">
+        <div className="flex items-center gap-2">
+          <div className="w-8 h-8 rounded-full bg-white/15 flex items-center justify-center text-lg">🏫</div>
+          <div>
+            <div className="text-xs font-bold">東京大学</div>
+            <div className="text-[10px] text-blue-200">全学導入・SSO連携</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function ResearchDashboard() {
+  const stats = [
+    { label: 'パネル登録者数', value: '1,247', sub: '人', change: '目標 3,700人（全構成員の10%）', pct: 34, color: 'bg-[#00356B]' },
+    { label: '再連絡同意率', value: '68', sub: '%', change: '848人が治験案内に同意', pct: 68, color: 'bg-[#02C39A]' },
+    { label: '今月の回答完了', value: '412', sub: '件', change: '完了率 91%（途中保存・リマインド）', pct: 91, color: 'bg-blue-500' },
+    { label: '今月の調査収益', value: '¥1.8M', sub: '', change: '都度課金 3案件', pct: 60, color: 'bg-amber-500' },
+  ]
+  const projects = [
+    { client: '東大 社会心理学研究室', type: '研究室', title: 'ウェルビーイング縦断調査 第2波', responses: '312/400', fee: '¥450K', status: 'active' },
+    { client: '製薬企業A', type: '製薬', title: '小児・思春期うつ 治験候補スクリーニング', responses: '84/100', fee: '¥800K', status: 'active' },
+    { client: '企業B 人事部', type: '企業', title: '職域ストレスチェック パイロット', responses: '156/200', fee: '¥550K', status: 'active' },
+    { client: '早稲田大 臨床心理研究室', type: '他大学', title: '不安症 共同研究アンケート', responses: '準備中', fee: '見積中', status: 'pending' },
+  ]
+  const typeBadge = (t) => {
+    const colors = { '研究室': 'bg-blue-100 text-blue-700', '製薬': 'bg-purple-100 text-purple-700', '企業': 'bg-amber-100 text-amber-700', '他大学': 'bg-green-100 text-green-700' }
+    return <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${colors[t]}`}>{t}</span>
+  }
+  return (
+    <div className="p-6 overflow-y-auto hide-scrollbar">
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h1 className="text-xl font-bold text-gray-800">ダッシュボード</h1>
+          <p className="text-sm text-gray-400 mt-0.5">LINE × 大学メールSSO — 本人確認済みの学内パネル</p>
+        </div>
+        <button className="bg-[#00356B] text-white px-4 py-2 rounded-lg text-sm font-bold">＋ 新規調査を作成</button>
+      </div>
+      <div className="grid grid-cols-4 gap-4 mb-6">
+        {stats.map((s, i) => (
+          <div key={i} className="bg-white rounded-xl p-4 shadow-sm">
+            <div className="text-xs text-gray-400 mb-2">{s.label}</div>
+            <div className="flex items-baseline gap-1">
+              <span className="text-2xl font-bold text-gray-800">{s.value}</span>
+              <span className="text-sm text-gray-500">{s.sub}</span>
+            </div>
+            <div className="text-[10px] text-gray-400 mt-1">{s.change}</div>
+            <div className="h-1 bg-gray-100 rounded-full mt-2"><div className={`h-full ${s.color} rounded-full opacity-70`} style={{ width: `${s.pct}%` }} /></div>
+          </div>
+        ))}
+      </div>
+      <div className="grid grid-cols-3 gap-4">
+        <div className="col-span-2 bg-white rounded-xl p-5 shadow-sm">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-sm font-bold text-gray-800">進行中の調査案件</h2>
+            <span className="text-xs text-gray-400">調査費は依頼者の都度課金</span>
+          </div>
+          <div className="space-y-2">
+            {projects.map((p, i) => (
+              <div key={i} className={`flex items-center gap-3 p-3 rounded-lg ${p.status === 'pending' ? 'bg-gray-50 opacity-70' : 'bg-gray-50 hover:bg-gray-100'} transition`}>
+                <div className="flex-1">
+                  <div className="flex items-center gap-2 mb-0.5">
+                    {typeBadge(p.type)}
+                    <span className="text-sm font-medium text-gray-800">{p.title}</span>
+                  </div>
+                  <div className="text-[10px] text-gray-400">{p.client}</div>
+                </div>
+                <div className="text-right">
+                  <div className="text-xs font-bold text-gray-700">{p.responses}</div>
+                  <div className="text-[10px] text-gray-400">{p.fee}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+        <div className="space-y-4">
+          <div className="bg-white rounded-xl p-5 shadow-sm">
+            <h2 className="text-sm font-bold text-gray-800 mb-3">展開ロードマップ</h2>
+            <div className="space-y-3">
+              {[
+                { year: '2026', text: '東大で実装（目標3,700人）', done: true },
+                { year: '2027', text: '早稲田で複製性を実証、2〜3大学へ', done: false },
+                { year: '2028', text: '企業・製薬へ外販、ストレスチェックSaaS', done: false },
+                { year: '将来', text: '全国の若年メンタル縦断コホートへ', done: false },
+              ].map((r, i) => (
+                <div key={i} className="flex items-start gap-2">
+                  <div className={`w-1.5 h-1.5 rounded-full mt-1.5 flex-shrink-0 ${r.done ? 'bg-[#02C39A]' : 'bg-gray-300'}`} />
+                  <div>
+                    <div className="text-xs font-bold text-gray-700">{r.year}</div>
+                    <div className="text-[10px] text-gray-500">{r.text}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+          <div className="bg-white rounded-xl p-5 shadow-sm">
+            <h2 className="text-sm font-bold text-gray-800 mb-3">パネルの価値</h2>
+            <div className="space-y-2 text-[11px] text-gray-600 leading-relaxed">
+              <div className="flex gap-2"><span>💰</span><span>調査は都度課金で収益化</span></div>
+              <div className="flex gap-2"><span>🧪</span><span>再連絡同意者は治験リクルートへ直結</span></div>
+              <div className="flex gap-2"><span>📊</span><span>縦断データはコホート資産として蓄積</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function ResearchProjects() {
+  const projects = [
+    { id: 'RQ-2026-018', client: '東大 社会心理学研究室', type: '研究室', title: 'ウェルビーイング縦断調査 第2波', target: 400, responses: 312, fee: '¥450,000', status: 'active', deadline: '4/30' },
+    { id: 'RQ-2026-019', client: '製薬企業A', type: '製薬', title: '小児・思春期うつ 治験候補スクリーニング', target: 100, responses: 84, fee: '¥800,000', status: 'active', deadline: '5/15' },
+    { id: 'RQ-2026-020', client: '企業B 人事部', type: '企業', title: '職域ストレスチェック パイロット', target: 200, responses: 156, fee: '¥550,000', status: 'active', deadline: '5/10' },
+    { id: 'RQ-2026-021', client: '早稲田大 臨床心理研究室', type: '他大学', title: '不安症 共同研究アンケート', target: 300, responses: 0, fee: '見積中', status: 'pending', deadline: '-' },
+    { id: 'RQ-2026-015', client: '東大 教育学研究科', type: '研究室', title: '新入生メンタルヘルス実態調査', target: 500, responses: 500, fee: '¥600,000', status: 'done', deadline: '完了' },
+  ]
+  const statusBadge = (s) => {
+    if (s === 'active') return <span className="text-[10px] bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full font-medium">配信中</span>
+    if (s === 'done') return <span className="text-[10px] bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-medium">完了</span>
+    return <span className="text-[10px] bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full font-medium">準備中</span>
+  }
+  return (
+    <div className="p-6 overflow-y-auto hide-scrollbar">
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-xl font-bold text-gray-800">調査案件</h1>
+        <button className="bg-[#00356B] text-white px-4 py-2 rounded-lg text-sm font-bold">＋ 新規調査を作成</button>
+      </div>
+      <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+        <table className="w-full">
+          <thead>
+            <tr className="bg-gray-50 border-b border-gray-100">
+              <th className="text-left text-[10px] font-bold text-gray-400 uppercase px-4 py-3">案件ID</th>
+              <th className="text-left text-[10px] font-bold text-gray-400 uppercase px-4 py-3">依頼者</th>
+              <th className="text-left text-[10px] font-bold text-gray-400 uppercase px-4 py-3">調査タイトル</th>
+              <th className="text-left text-[10px] font-bold text-gray-400 uppercase px-4 py-3">回答数</th>
+              <th className="text-left text-[10px] font-bold text-gray-400 uppercase px-4 py-3">調査費</th>
+              <th className="text-left text-[10px] font-bold text-gray-400 uppercase px-4 py-3">締切</th>
+              <th className="text-left text-[10px] font-bold text-gray-400 uppercase px-4 py-3">ステータス</th>
+            </tr>
+          </thead>
+          <tbody>
+            {projects.map((p, i) => (
+              <tr key={i} className="border-b border-gray-50 hover:bg-gray-50">
+                <td className="px-4 py-3 text-xs font-mono text-gray-400">{p.id}</td>
+                <td className="px-4 py-3 text-xs text-gray-700">{p.client}</td>
+                <td className="px-4 py-3 text-sm text-gray-800">{p.title}</td>
+                <td className="px-4 py-3">
+                  <div className="text-xs font-bold text-gray-700">{p.responses}/{p.target}</div>
+                  <div className="w-16 h-1 bg-gray-100 rounded-full mt-1"><div className="h-full bg-[#00356B] rounded-full" style={{ width: `${p.target > 0 ? Math.min(100, (p.responses / p.target) * 100) : 0}%` }} /></div>
+                </td>
+                <td className="px-4 py-3 text-xs font-medium text-gray-700">{p.fee}</td>
+                <td className="px-4 py-3 text-xs text-gray-500">{p.deadline}</td>
+                <td className="px-4 py-3">{statusBadge(p.status)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <div className="mt-4 bg-[#00356B]/5 rounded-xl p-4 text-xs text-[#00356B]">
+        💡 調査依頼者（研究室・企業・製薬・他大学）が調査費を都度課金で支払い。教職員・学生の参加は無料＋Amazonギフト謝礼
+      </div>
+    </div>
+  )
+}
+
+function ResearchPanelPage() {
+  const affiliations = [
+    { label: '学部生', count: 534, pct: 43 },
+    { label: '大学院生', count: 412, pct: 33 },
+    { label: '教職員', count: 301, pct: 24 },
+  ]
+  const faculties = [
+    { label: '教養学部', pct: 22 },
+    { label: '工学系', pct: 18 },
+    { label: '文学・人文社会系', pct: 14 },
+    { label: '理学系', pct: 12 },
+    { label: '医学・薬学系', pct: 10 },
+    { label: 'その他', pct: 24 },
+  ]
+  const monthly = [
+    { month: '1月', count: 180 }, { month: '2月', count: 420 }, { month: '3月', count: 760 }, { month: '4月', count: 1247 },
+  ]
+  return (
+    <div className="p-6 overflow-y-auto hide-scrollbar">
+      <div className="mb-6">
+        <h1 className="text-xl font-bold text-gray-800">パネル管理</h1>
+        <p className="text-sm text-gray-400 mt-0.5">SSO本人確認済み 1,247人 / 目標 3,700人（全構成員 約3.7万人の10%）</p>
+      </div>
+      <div className="grid grid-cols-3 gap-4 mb-6">
+        <div className="bg-white rounded-xl p-5 shadow-sm">
+          <h2 className="text-sm font-bold text-gray-800 mb-4">登録推移</h2>
+          <div className="flex items-end gap-3 h-32">
+            {monthly.map((m, i) => (
+              <div key={i} className="flex-1 flex flex-col items-center justify-end h-full">
+                <div className="text-[10px] font-bold text-gray-600 mb-1">{m.count}</div>
+                <div className="w-full bg-[#00356B] rounded-t opacity-80" style={{ height: `${(m.count / 3700) * 100}%`, minHeight: '4px' }} />
+                <div className="text-[10px] text-gray-400 mt-1">{m.month}</div>
+              </div>
+            ))}
+          </div>
+          <div className="mt-3 h-1 bg-gray-100 rounded-full"><div className="h-full bg-[#02C39A] rounded-full" style={{ width: '34%' }} /></div>
+          <div className="text-[10px] text-gray-400 mt-1 text-center">目標達成率 34%</div>
+        </div>
+        <div className="bg-white rounded-xl p-5 shadow-sm">
+          <h2 className="text-sm font-bold text-gray-800 mb-4">所属内訳</h2>
+          <div className="space-y-3">
+            {affiliations.map((a, i) => (
+              <div key={i}>
+                <div className="flex justify-between text-xs mb-1">
+                  <span className="text-gray-700 font-medium">{a.label}</span>
+                  <span className="text-gray-400">{a.count}人</span>
+                </div>
+                <div className="h-2 bg-gray-100 rounded-full"><div className="h-full bg-[#00356B] rounded-full opacity-80" style={{ width: `${a.pct}%` }} /></div>
+              </div>
+            ))}
+          </div>
+          <div className="mt-4 bg-gray-50 rounded-lg p-3 text-[10px] text-gray-500 leading-relaxed">
+            大学メールSSOで本人確認済み — 自己申告パネルとの決定的な違い
+          </div>
+        </div>
+        <div className="bg-white rounded-xl p-5 shadow-sm">
+          <h2 className="text-sm font-bold text-gray-800 mb-4">学部・研究科分布</h2>
+          <div className="space-y-2.5">
+            {faculties.map((f, i) => (
+              <div key={i} className="flex items-center gap-2">
+                <span className="text-xs text-gray-600 w-28 flex-shrink-0">{f.label}</span>
+                <div className="flex-1 h-2 bg-gray-100 rounded-full"><div className="h-full bg-[#02C39A] rounded-full opacity-80" style={{ width: `${f.pct}%` }} /></div>
+                <span className="text-[10px] text-gray-400 w-8 text-right">{f.pct}%</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+      <div className="bg-white rounded-xl p-5 shadow-sm">
+        <h2 className="text-sm font-bold text-gray-800 mb-3">パネルの特徴</h2>
+        <div className="grid grid-cols-3 gap-4">
+          <div className="bg-gray-50 rounded-xl p-4">
+            <div className="text-lg mb-1">🔐</div>
+            <div className="text-xs font-bold text-gray-800 mb-1">LINE × 大学SSO認証</div>
+            <div className="text-[10px] text-gray-500 leading-relaxed">本人確認済みの学内パネル。属性は認証由来で信頼性が高い</div>
+          </div>
+          <div className="bg-gray-50 rounded-xl p-4">
+            <div className="text-lg mb-1">🔄</div>
+            <div className="text-xs font-bold text-gray-800 mb-1">縦断コホート</div>
+            <div className="text-[10px] text-gray-500 leading-relaxed">同一人物を継続追跡。若年メンタルの縦断データは国内に空白</div>
+          </div>
+          <div className="bg-gray-50 rounded-xl p-4">
+            <div className="text-lg mb-1">🎁</div>
+            <div className="text-xs font-bold text-gray-800 mb-1">高回答率の設計</div>
+            <div className="text-[10px] text-gray-500 leading-relaxed">LINE配信×Amazonギフト謝礼×途中保存・リマインドで完了率91%</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function ResearchRecruit() {
+  const candidates = [
+    { trial: '小児・思春期うつ VR治療 探索試験', partner: '長野県立こころの医療センター駒ヶ根・信州大学', eligible: 62, contacted: 28, consented: 9, status: 'recruiting' },
+    { trial: '不安症（社交不安）呼吸トレーニング 共同研究', partner: '早稲田大学', eligible: 84, contacted: 40, consented: 15, status: 'recruiting' },
+    { trial: 'うつ病VR 検証治験（成人）', partner: '実施医療機関 12施設', eligible: 130, contacted: 130, consented: 50, status: 'done' },
+  ]
+  return (
+    <div className="p-6 overflow-y-auto hide-scrollbar">
+      <div className="mb-6">
+        <h1 className="text-xl font-bold text-gray-800">治験リクルート</h1>
+        <p className="text-sm text-gray-400 mt-0.5">再連絡同意者 848人 — 治験・臨床研究の集積インフラ</p>
+      </div>
+      <div className="grid grid-cols-3 gap-4 mb-6">
+        <div className="bg-white rounded-xl p-4 shadow-sm">
+          <div className="text-xs text-gray-400 mb-2">再連絡同意者</div>
+          <div className="text-2xl font-bold text-gray-800">848<span className="text-sm text-gray-500 ml-1">人</span></div>
+          <div className="text-[10px] text-gray-400 mt-1">パネルの68% — 属性・スクリーニング済み</div>
+        </div>
+        <div className="bg-white rounded-xl p-4 shadow-sm">
+          <div className="text-xs text-gray-400 mb-2">進行中の治験マッチング</div>
+          <div className="text-2xl font-bold text-gray-800">2<span className="text-sm text-gray-500 ml-1">件</span></div>
+          <div className="text-[10px] text-gray-400 mt-1">小児うつ・不安症パイプライン</div>
+        </div>
+        <div className="bg-white rounded-xl p-4 shadow-sm">
+          <div className="text-xs text-gray-400 mb-2">外部パネル費の削減</div>
+          <div className="text-2xl font-bold text-[#02C39A]">¥20M<span className="text-sm text-gray-500 ml-1">→ 自社化</span></div>
+          <div className="text-[10px] text-gray-400 mt-1">現治験で外部支払いした募集費を内製化</div>
+        </div>
+      </div>
+      <div className="bg-white rounded-xl p-5 shadow-sm">
+        <h2 className="text-sm font-bold text-gray-800 mb-4">治験・臨床研究マッチング</h2>
+        <div className="space-y-3">
+          {candidates.map((c, i) => (
+            <div key={i} className="p-4 bg-gray-50 rounded-xl">
+              <div className="flex items-center justify-between mb-2">
+                <div className="text-sm font-bold text-gray-800">{c.trial}</div>
+                {c.status === 'recruiting'
+                  ? <span className="text-[10px] bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full font-medium">募集中</span>
+                  : <span className="text-[10px] bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-medium">組入完了</span>}
+              </div>
+              <div className="text-[10px] text-gray-400 mb-3">{c.partner}</div>
+              <div className="flex gap-6">
+                <div><div className="text-lg font-bold text-gray-800">{c.eligible}</div><div className="text-[10px] text-gray-400">適格候補</div></div>
+                <div><div className="text-lg font-bold text-gray-800">{c.contacted}</div><div className="text-[10px] text-gray-400">LINE案内済</div></div>
+                <div><div className="text-lg font-bold text-[#00356B]">{c.consented}</div><div className="text-[10px] text-gray-400">同意取得</div></div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+      <div className="mt-4 bg-[#02C39A]/10 rounded-xl p-4 text-xs text-[#028090]">
+        🧪 SSO本人確認×属性データ済みのパネルから直接リクルート — 外部パネルへの都度支払いを不要にし、小児・不安症治験を加速
+      </div>
+    </div>
+  )
+}
+
+function ResearchAdminApp() {
+  const [page, setPage] = useState('dashboard')
+  const pages = {
+    dashboard: <ResearchDashboard />,
+    projects: <ResearchProjects />,
+    panel: <ResearchPanelPage />,
+    recruit: <ResearchRecruit />,
+  }
+  return (
+    <div className="w-[960px] h-[640px] bg-gray-100 rounded-2xl overflow-hidden shadow-2xl flex">
+      <ResearchSidebar active={page} onNav={setPage} />
+      <div className="flex-1 flex flex-col overflow-hidden">
+        {pages[page]}
+      </div>
+    </div>
+  )
+}
+
 // ===== MAIN APP =====
 
 function App() {
@@ -2186,6 +2602,7 @@ function App() {
     const h = window.location.hash.replace('#', '').toLowerCase()
     if (h === 'utokyo' || h === 'well') return 'utokyo'
     if (h === 'admin' || h === 'doctor') return 'admin'
+    if (h === 'research' || h === 'kiban') return 'research'
     return 'clinic'
   })()
   const [mode, setMode] = useState(initialMode)
@@ -2198,6 +2615,7 @@ function App() {
       const h = window.location.hash.replace('#', '').toLowerCase()
       if (h === 'utokyo' || h === 'well') setMode('utokyo')
       else if (h === 'admin' || h === 'doctor') setMode('admin')
+      else if (h === 'research' || h === 'kiban') setMode('research')
       else if (h === 'clinic' || h === '') setMode('clinic')
     }
     window.addEventListener('hashchange', onHashChange)
@@ -2259,9 +2677,15 @@ function App() {
           className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all ${mode === 'admin' ? 'bg-[#1e293b] text-white shadow-lg shadow-[#1e293b]/30' : 'bg-white/15 text-white/60 hover:bg-white/25'}`}>
           🩺 医師管理
         </button>
+        <button onClick={() => changeMode('research')}
+          className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all ${mode === 'research' ? 'bg-[#00356B] text-white shadow-lg shadow-[#00356B]/30' : 'bg-white/15 text-white/60 hover:bg-white/25'}`}>
+          📊 調査基盤
+        </button>
       </div>
       {mode === 'admin' ? (
         <DoctorAdminApp />
+      ) : mode === 'research' ? (
+        <ResearchAdminApp />
       ) : (
         <div className="phone-frame">
           <div className="phone-screen">
