@@ -750,17 +750,52 @@ function UTokyoBubble({ children, delay = 0 }) {
 }
 
 function UTokyoChatScreen({ onNavigate }) {
+  const [mood, setMood] = useState(null)
+  const moods = [
+    { emoji: '😊', label: '晴れやか' },
+    { emoji: '😌', label: 'おだやか' },
+    { emoji: '😐', label: 'ふつう' },
+    { emoji: '😔', label: 'すこし曇り' },
+    { emoji: '😣', label: 'つらい' },
+  ]
   return (
     <>
       <UTokyoChatHeader />
       <div className="flex-1 bg-[#8CABD9] px-3 py-3 overflow-y-auto hide-scrollbar">
         <div className="text-center text-white/60 text-[10px] mb-3">4月15日(火)</div>
         <UTokyoBubble>
-          <div className="font-bold mb-1">こんにちは！🌿</div>
-          <div>UTokyo Well へようこそ。</div>
-          <div className="mt-1">あなたのWell-beingをサポートする東京大学の公式プログラムです。</div>
+          <div className="font-bold mb-1">おはようございます！🌿</div>
+          <div>今日も来てくれてありがとうございます。</div>
         </UTokyoBubble>
-        <UTokyoBubble delay={400}>
+        <UTokyoBubble delay={300}>
+          <div className="bg-gradient-to-br from-[#FFF8E7] to-[#FFEFD5] rounded-xl p-3 -mx-1">
+            <div className="text-[#B8860B] font-bold text-sm mb-0.5">☀️ 今日の気分チェックイン</div>
+            {mood === null ? (
+              <>
+                <div className="text-xs text-gray-600 mb-2">タップするだけ・毎日 +5pt</div>
+                <div className="flex justify-between gap-1">
+                  {moods.map((m, i) => (
+                    <button key={i} onClick={() => setMood(m)} className="flex-1 bg-white rounded-xl py-2 text-xl shadow-sm hover:scale-110 transition-transform">{m.emoji}</button>
+                  ))}
+                </div>
+              </>
+            ) : (
+              <div className="fade-enter">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="text-3xl">{mood.emoji}</span>
+                  <div>
+                    <div className="text-xs font-bold text-gray-800">「{mood.label}」を記録しました</div>
+                    <div className="text-[10px] text-[#B8860B] font-bold">+5pt獲得 ✨ 7日連続チェックイン🔥</div>
+                  </div>
+                </div>
+                <div className="bg-white/70 rounded-lg p-2 text-[10px] text-gray-600">
+                  🌤 今日のキャンパス気分：62%が「おだやか」以上。あなたと同じ気分の仲間が318人います
+                </div>
+              </div>
+            )}
+          </div>
+        </UTokyoBubble>
+        <UTokyoBubble delay={600}>
           <div className="bg-[#F0F5FF] rounded-xl p-3 -mx-1">
             <div className="text-[#00356B] font-bold text-sm mb-1">📋 研究調査のお願い</div>
             <div className="text-xs text-gray-600 mb-1">所要時間：約15分</div>
@@ -768,7 +803,13 @@ function UTokyoChatScreen({ onNavigate }) {
             <button onClick={() => onNavigate('utokyo_sso')} className="w-full bg-[#00356B] text-white rounded-full py-2.5 text-sm font-bold">アンケートに回答する</button>
           </div>
         </UTokyoBubble>
-        <UTokyoBubble delay={800}>
+        <UTokyoBubble delay={900}>
+          <div className="text-xs">
+            <span className="font-bold">🧘 1分だけ、深呼吸しませんか？</span><br/>
+            <span className="text-gray-500">授業やレポートの合間に。呼吸トレーニングで頭がすっきりします（+10pt）</span>
+          </div>
+        </UTokyoBubble>
+        <UTokyoBubble delay={1200}>
           <div className="text-xs text-gray-500">
             ※ 回答は匿名化され研究目的のみに使用されます<br/>
             ※ 途中保存が可能です。未完了の場合はLINEでリマインドをお送りします
@@ -778,11 +819,169 @@ function UTokyoChatScreen({ onNavigate }) {
       <div className="bg-white border-t border-gray-100 p-2.5">
         <div className="flex gap-1.5 mb-1.5">
           <button onClick={() => onNavigate('utokyo_sso')} className="flex-1 bg-[#00356B] text-white rounded-xl py-2.5 text-[10px] font-bold">📋 アンケート回答</button>
-          <button onClick={() => onNavigate('utokyo_survey')} className="flex-1 bg-amber-500 text-white rounded-xl py-2.5 text-[10px] font-bold">🔄 途中から再開</button>
+          <button onClick={() => onNavigate('utokyo_breath')} className="flex-1 bg-gradient-to-r from-teal-400 to-emerald-500 text-white rounded-xl py-2.5 text-[10px] font-bold">🧘 1分呼吸法</button>
+          <button onClick={() => onNavigate('utokyo_mypage')} className="flex-1 bg-amber-500 text-white rounded-xl py-2.5 text-[10px] font-bold">🏆 マイWell</button>
         </div>
         <button onClick={() => onNavigate('utokyo_avatar_chat')} className="w-full bg-gradient-to-r from-purple-500 to-indigo-600 text-white rounded-xl py-2.5 text-[10px] font-bold">🤖 AIアバターに相談する</button>
       </div>
     </>
+  )
+}
+
+function UTokyoBreathScreen({ onBack }) {
+  const CYCLES = 5
+  const phases = [
+    { label: '吸って', dur: 4000, scale: 1.4 },
+    { label: 'とめて', dur: 2000, scale: 1.4 },
+    { label: '吐いて', dur: 6000, scale: 0.75 },
+  ]
+  const [running, setRunning] = useState(false)
+  const [done, setDone] = useState(false)
+  const [phaseIdx, setPhaseIdx] = useState(0)
+  const [cycle, setCycle] = useState(0)
+
+  useEffect(() => {
+    if (!running || done) return
+    const t = setTimeout(() => {
+      if (phaseIdx === phases.length - 1) {
+        if (cycle === CYCLES - 1) { setDone(true); return }
+        setCycle(cycle + 1); setPhaseIdx(0)
+      } else {
+        setPhaseIdx(phaseIdx + 1)
+      }
+    }, phases[phaseIdx].dur)
+    return () => clearTimeout(t)
+  }, [running, done, phaseIdx, cycle])
+
+  const phase = phases[phaseIdx]
+  return (
+    <div className="flex flex-col h-full slide-enter" style={{ background: 'linear-gradient(180deg, #0F2B4C 0%, #1A4A6E 60%, #2A6B7C 100%)' }}>
+      <div className="flex items-center px-3 py-2.5">
+        <button onClick={onBack} className="p-1 text-white/70">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M15 18l-6-6 6-6"/></svg>
+        </button>
+        <div className="flex-1 text-center text-sm font-bold text-white/90">1分呼吸法</div>
+        <div className="w-7" />
+      </div>
+      <div className="flex-1 flex flex-col items-center justify-center px-6">
+        {!running && !done && (
+          <div className="text-center fade-enter">
+            <div className="text-5xl mb-4">🧘</div>
+            <div className="text-white font-bold text-lg mb-2">1分間、呼吸に集中</div>
+            <div className="text-white/60 text-xs leading-relaxed mb-8">4秒吸って、2秒とめて、6秒吐く。<br/>5回くり返すだけで、心が落ち着きます</div>
+            <button onClick={() => setRunning(true)} className="bg-white text-[#0F2B4C] rounded-full px-10 py-3.5 text-sm font-bold">はじめる</button>
+          </div>
+        )}
+        {running && !done && (
+          <div className="text-center">
+            <div className="relative flex items-center justify-center mb-10" style={{ height: '220px' }}>
+              <div className="absolute rounded-full bg-teal-300/10" style={{ width: '210px', height: '210px' }} />
+              <div className="absolute rounded-full bg-teal-300/20" style={{ width: '170px', height: '170px', transform: `scale(${phase.scale})`, transition: `transform ${phase.dur}ms ease-in-out` }} />
+              <div className="absolute rounded-full bg-gradient-to-br from-teal-300 to-emerald-400 flex items-center justify-center" style={{ width: '130px', height: '130px', transform: `scale(${phase.scale})`, transition: `transform ${phase.dur}ms ease-in-out` }}>
+                <span className="text-[#0F2B4C] font-bold text-lg">{phase.label}</span>
+              </div>
+            </div>
+            <div className="flex justify-center gap-1.5 mb-3">
+              {Array.from({ length: CYCLES }).map((_, i) => (
+                <div key={i} className={`w-2 h-2 rounded-full ${i <= cycle ? 'bg-teal-300' : 'bg-white/20'}`} />
+              ))}
+            </div>
+            <div className="text-white/50 text-xs">{cycle + 1} / {CYCLES} 回目</div>
+          </div>
+        )}
+        {done && (
+          <div className="text-center fade-enter">
+            <div className="text-5xl mb-4">✨</div>
+            <div className="text-white font-bold text-lg mb-2">おつかれさまでした</div>
+            <div className="text-teal-300 font-bold text-sm mb-1">+10pt 獲得！</div>
+            <div className="text-white/60 text-xs mb-8">今週3回目の呼吸法 — いい調子です🧘</div>
+            <button onClick={onBack} className="bg-white text-[#0F2B4C] rounded-full px-10 py-3.5 text-sm font-bold">トップに戻る</button>
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
+function UTokyoMyPageScreen({ onNavigate, onBack }) {
+  const week = [
+    { day: '水', score: 58 }, { day: '木', score: 64 }, { day: '金', score: 61 },
+    { day: '土', score: 70 }, { day: '日', score: 74 }, { day: '月', score: 68 }, { day: '火', score: 72 },
+  ]
+  const badges = [
+    { icon: '🌱', label: 'はじめの一歩', earned: true },
+    { icon: '🔥', label: '7日連続', earned: true },
+    { icon: '📋', label: '調査協力×3', earned: true },
+    { icon: '🧘', label: '呼吸マスター', earned: false },
+  ]
+  return (
+    <div className="flex flex-col h-full slide-enter">
+      <LiffHeader title="マイWell" onBack={onBack} onClose={onBack} />
+      <div className="flex-1 bg-gray-50 p-4 overflow-y-auto hide-scrollbar">
+        <div className="bg-gradient-to-br from-[#00356B] to-[#0A5CA8] rounded-2xl p-5 text-white mb-3">
+          <div className="flex items-center justify-between mb-3">
+            <div>
+              <div className="text-[10px] text-blue-200 mb-0.5">あなたのウェルビーイングスコア</div>
+              <div className="flex items-baseline gap-2">
+                <span className="text-4xl font-bold">72</span>
+                <span className="text-xs text-teal-300 font-bold">▲ 今週 +4</span>
+              </div>
+            </div>
+            <div className="text-4xl">🌿</div>
+          </div>
+          <div className="flex items-end gap-1.5 h-14">
+            {week.map((d, i) => (
+              <div key={i} className="flex-1 flex flex-col items-center justify-end h-full gap-1">
+                <div className={`w-full rounded-t ${i === week.length - 1 ? 'bg-teal-300' : 'bg-white/25'}`} style={{ height: `${d.score}%` }} />
+                <span className="text-[8px] text-blue-200">{d.day}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+        <div className="grid grid-cols-2 gap-3 mb-3">
+          <div className="bg-white rounded-2xl p-4 shadow-sm text-center">
+            <div className="text-2xl mb-1">🔥</div>
+            <div className="text-xl font-bold text-gray-800">7日</div>
+            <div className="text-[10px] text-gray-400">連続チェックイン</div>
+          </div>
+          <div className="bg-white rounded-2xl p-4 shadow-sm text-center">
+            <div className="text-2xl mb-1">🪙</div>
+            <div className="text-xl font-bold text-gray-800">145pt</div>
+            <div className="text-[10px] text-gray-400">500ptでギフト券に交換</div>
+          </div>
+        </div>
+        <div className="bg-white rounded-2xl p-4 shadow-sm mb-3">
+          <div className="text-xs font-bold text-gray-800 mb-3">バッジコレクション</div>
+          <div className="grid grid-cols-4 gap-2">
+            {badges.map((b, i) => (
+              <div key={i} className={`text-center ${b.earned ? '' : 'opacity-30 grayscale'}`}>
+                <div className="text-2xl mb-1">{b.icon}</div>
+                <div className="text-[8px] text-gray-500 leading-tight">{b.label}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+        <div className="bg-white rounded-2xl p-4 shadow-sm">
+          <div className="text-xs font-bold text-gray-800 mb-2">今日のセルフケア</div>
+          <button onClick={() => onNavigate('utokyo_breath')} className="w-full flex items-center gap-3 p-3 bg-teal-50 rounded-xl mb-2">
+            <span className="text-xl">🧘</span>
+            <div className="flex-1 text-left">
+              <div className="text-xs font-bold text-gray-800">1分呼吸法</div>
+              <div className="text-[10px] text-gray-400">+10pt・今週あと2回で呼吸マスター</div>
+            </div>
+            <span className="text-gray-300">›</span>
+          </button>
+          <button onClick={() => onNavigate('utokyo_avatar_chat')} className="w-full flex items-center gap-3 p-3 bg-purple-50 rounded-xl">
+            <span className="text-xl">🤖</span>
+            <div className="flex-1 text-left">
+              <div className="text-xs font-bold text-gray-800">AIアバターに相談</div>
+              <div className="text-[10px] text-gray-400">24時間いつでも・匿名OK</div>
+            </div>
+            <span className="text-gray-300">›</span>
+          </button>
+        </div>
+      </div>
+    </div>
   )
 }
 
@@ -1687,6 +1886,8 @@ function UTokyoApp() {
     utokyo_survey: <UTokyoSurveyScreen onNavigate={navigate} onBack={goBack} />,
     utokyo_recontact: <UTokyoRecontactScreen onNavigate={navigate} onConsent={setRecontact} />,
     utokyo_complete: <UTokyoCompleteScreen onNavigate={navigate} recontact={recontact} />,
+    utokyo_breath: <UTokyoBreathScreen onBack={goBack} />,
+    utokyo_mypage: <UTokyoMyPageScreen onNavigate={navigate} onBack={goBack} />,
     utokyo_avatar_chat: <AvatarChatScreen onBack={goBack} theme="utokyo" />,
   }
 
@@ -2240,15 +2441,16 @@ function ResearchSidebar({ active, onNav }) {
     { key: 'projects', icon: '📋', label: '調査案件' },
     { key: 'panel', icon: '👥', label: 'パネル管理' },
     { key: 'recruit', icon: '🧪', label: '治験リクルート' },
+    { key: 'benchmark', icon: '🗺️', label: 'ベンチマーク' },
   ]
   return (
     <div className="w-56 bg-[#00356B] text-white flex flex-col flex-shrink-0">
       <div className="px-4 py-5 border-b border-white/10">
         <div className="flex items-center gap-2">
-          <div className="w-8 h-8 bg-white/15 rounded-lg flex items-center justify-center text-sm font-bold">Bi</div>
+          <div className="w-8 h-8 bg-white/15 rounded-lg flex items-center justify-center text-lg">🏫</div>
           <div>
-            <div className="text-sm font-bold">BiPSEE調査基盤</div>
-            <div className="text-[10px] text-blue-200">キャンパスウェルビーイング</div>
+            <div className="text-sm font-bold">キャンパスウェルビーイング</div>
+            <div className="text-[10px] text-blue-200">東京大学 UTokyo Well</div>
           </div>
         </div>
       </div>
@@ -2262,10 +2464,10 @@ function ResearchSidebar({ active, onNav }) {
       </div>
       <div className="px-4 py-4 border-t border-white/10">
         <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-full bg-white/15 flex items-center justify-center text-lg">🏫</div>
+          <div className="w-8 h-8 rounded-full bg-white/15 flex items-center justify-center text-[9px] font-bold">Bi</div>
           <div>
-            <div className="text-xs font-bold">東京大学</div>
-            <div className="text-[10px] text-blue-200">全学導入・SSO連携</div>
+            <div className="text-xs font-bold">System by BiPSEE</div>
+            <div className="text-[10px] text-blue-200">調査・治験基盤の提供</div>
           </div>
         </div>
       </div>
@@ -2576,6 +2778,100 @@ function ResearchRecruit() {
   )
 }
 
+function ResearchBenchmark() {
+  const competitors = [
+    {
+      name: 'Penmark', scale: '学生100万人・約4,000校',
+      strength: '学生証・大学メール認証の学生パネル × LINEミニアプリ調査を商用化',
+      gap: '大学非公認。健康・医療・治験の領域には未進出',
+    },
+    {
+      name: 'LINEリサーチ・TesTee', scale: 'モニター700万人／220万人',
+      strength: 'LINE調査・若年リーチ・都度課金の価格相場（数十万円/調査）を実証',
+      gap: '属性は自己申告。学生の本人確認はない',
+    },
+    {
+      name: 'エムスリー系 治験パネル', scale: '治験ボランティア200万人',
+      strength: 'パネル→治験組入れの接続を大規模に実証（生活向上WEB・QLife）',
+      gap: '患者・謝礼目的層が中心。大学公認・健常若年の縦断把握はない',
+    },
+    {
+      name: '海外先行モデル', scale: 'SONA 1,500大学・Prolific 20万人・HMS 675校',
+      strength: '大学公認プール、調査側課金・参加者報酬、学生メンタル縦断調査、同意→治験接続を各々実証',
+      gap: '各サービスが部品を1つずつ持つのみ。統合したものは存在しない',
+    },
+  ]
+  const matrix = [
+    { feature: '本人確認（SSO認証）', penmark: true, line: false, m3: false, overseas: true, us: true },
+    { feature: '大学公認・全学導入', penmark: false, line: false, m3: false, overseas: true, us: true },
+    { feature: 'LINE接点・高回答率', penmark: true, line: true, m3: false, overseas: false, us: true },
+    { feature: '治験リクルート接続', penmark: false, line: false, m3: true, overseas: true, us: true },
+    { feature: '健常若年の縦断コホート', penmark: false, line: false, m3: false, overseas: true, us: true },
+    { feature: 'メンタルヘルス特化', penmark: false, line: false, m3: false, overseas: true, us: true },
+  ]
+  const check = (v) => v
+    ? <span className="text-[#02C39A] font-bold">✓</span>
+    : <span className="text-gray-300">─</span>
+  return (
+    <div className="p-6 overflow-y-auto hide-scrollbar">
+      <div className="mb-6">
+        <h1 className="text-xl font-bold text-gray-800">ベンチマーク</h1>
+        <p className="text-sm text-gray-400 mt-0.5">類似サービスは「部品ごと」に存在 — 束ねた者は不在（2026年7月 当社調査）</p>
+      </div>
+      <div className="grid grid-cols-2 gap-4 mb-6">
+        {competitors.map((c, i) => (
+          <div key={i} className="bg-white rounded-xl p-4 shadow-sm">
+            <div className="flex items-center justify-between mb-2">
+              <div className="text-sm font-bold text-gray-800">{c.name}</div>
+              <div className="text-[10px] text-gray-400">{c.scale}</div>
+            </div>
+            <div className="text-[11px] text-gray-600 leading-relaxed mb-2">✓ {c.strength}</div>
+            <div className="text-[11px] text-red-400 leading-relaxed">△ {c.gap}</div>
+          </div>
+        ))}
+      </div>
+      <div className="bg-white rounded-xl shadow-sm overflow-hidden mb-4">
+        <div className="px-5 py-3 border-b border-gray-100 flex items-center justify-between">
+          <h2 className="text-sm font-bold text-gray-800">機能比較 — 部品を1つに束ねる</h2>
+          <span className="text-[10px] text-gray-400">★ = 本基盤（東大 × UTokyo Well）</span>
+        </div>
+        <table className="w-full">
+          <thead>
+            <tr className="bg-gray-50 border-b border-gray-100">
+              <th className="text-left text-[10px] font-bold text-gray-400 px-4 py-2.5">機能</th>
+              <th className="text-center text-[10px] font-bold text-gray-400 px-2 py-2.5">Penmark</th>
+              <th className="text-center text-[10px] font-bold text-gray-400 px-2 py-2.5">LINEリサーチ系</th>
+              <th className="text-center text-[10px] font-bold text-gray-400 px-2 py-2.5">エムスリー系</th>
+              <th className="text-center text-[10px] font-bold text-gray-400 px-2 py-2.5">海外モデル</th>
+              <th className="text-center text-[10px] font-bold text-[#00356B] px-2 py-2.5 bg-[#00356B]/5">★ 本基盤</th>
+            </tr>
+          </thead>
+          <tbody>
+            {matrix.map((r, i) => (
+              <tr key={i} className="border-b border-gray-50">
+                <td className="px-4 py-2.5 text-xs text-gray-700">{r.feature}</td>
+                <td className="px-2 py-2.5 text-center text-sm">{check(r.penmark)}</td>
+                <td className="px-2 py-2.5 text-center text-sm">{check(r.line)}</td>
+                <td className="px-2 py-2.5 text-center text-sm">{check(r.m3)}</td>
+                <td className="px-2 py-2.5 text-center text-sm">{check(r.overseas)}</td>
+                <td className="px-2 py-2.5 text-center text-sm bg-[#00356B]/5">{check(r.us)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <div className="grid grid-cols-2 gap-4">
+        <div className="bg-[#02C39A]/10 rounded-xl p-4 text-xs text-[#028090] leading-relaxed">
+          ✅ 各部品は他社が実証済み＝モデルリスクは小さい。束ねる競合は不在＝先行者になれる
+        </div>
+        <div className="bg-amber-50 rounded-xl p-4 text-xs text-amber-700 leading-relaxed">
+          ⚠️ 警戒はPenmarkとエムスリーの近接 — 「大学公認」と臨床グレードの同意設計が防壁
+        </div>
+      </div>
+    </div>
+  )
+}
+
 function ResearchAdminApp() {
   const [page, setPage] = useState('dashboard')
   const pages = {
@@ -2583,6 +2879,7 @@ function ResearchAdminApp() {
     projects: <ResearchProjects />,
     panel: <ResearchPanelPage />,
     recruit: <ResearchRecruit />,
+    benchmark: <ResearchBenchmark />,
   }
   return (
     <div className="w-[960px] h-[640px] bg-gray-100 rounded-2xl overflow-hidden shadow-2xl flex">
