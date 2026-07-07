@@ -764,65 +764,38 @@ function UTokyoChatScreen({ onNavigate }) {
       <div className="flex-1 bg-[#8CABD9] px-3 py-3 overflow-y-auto hide-scrollbar">
         <div className="text-center text-white/60 text-[10px] mb-3">4月15日(火)</div>
         <UTokyoBubble>
-          <div className="font-bold mb-1">おはようございます！🌿</div>
-          <div>今日も来てくれてありがとうございます。</div>
-        </UTokyoBubble>
-        <UTokyoBubble delay={300}>
-          <div className="bg-gradient-to-br from-[#FFF8E7] to-[#FFEFD5] rounded-xl p-3 -mx-1">
-            <div className="text-[#B8860B] font-bold text-sm mb-0.5">☀️ 今日の気分チェックイン</div>
-            {mood === null ? (
-              <>
-                <div className="text-xs text-gray-600 mb-2">タップするだけ・毎日 +5pt</div>
-                <div className="flex justify-between gap-1">
-                  {moods.map((m, i) => (
-                    <button key={i} onClick={() => setMood(m)} className="flex-1 bg-white rounded-xl py-2 text-xl shadow-sm hover:scale-110 transition-transform">{m.emoji}</button>
-                  ))}
-                </div>
-              </>
-            ) : (
-              <div className="fade-enter">
-                <div className="flex items-center gap-2 mb-2">
-                  <span className="text-3xl">{mood.emoji}</span>
-                  <div>
-                    <div className="text-xs font-bold text-gray-800">「{mood.label}」を記録しました</div>
-                    <div className="text-[10px] text-[#B8860B] font-bold">+5pt獲得 ✨ 7日連続チェックイン🔥</div>
-                  </div>
-                </div>
-                <div className="bg-white/70 rounded-lg p-2 text-[10px] text-gray-600">
-                  🌤 今日のキャンパス気分：62%が「おだやか」以上。あなたと同じ気分の仲間が318人います
-                </div>
+          <div className="font-bold mb-2">おはようございます🌿 今日の気分は？</div>
+          {mood === null ? (
+            <>
+              <div className="flex gap-1.5">
+                {moods.map((m, i) => (
+                  <button key={i} onClick={() => setMood(m)} className="flex-1 bg-gray-50 rounded-xl py-2 text-xl hover:scale-110 transition-transform">{m.emoji}</button>
+                ))}
               </div>
-            )}
-          </div>
+              <div className="text-[10px] text-gray-400 mt-1.5">タップで記録・毎日 +5pt</div>
+            </>
+          ) : (
+            <div className="fade-enter">
+              <div className="text-xs font-bold text-gray-800 mb-0.5">{mood.emoji}「{mood.label}」を記録しました</div>
+              <div className="text-[10px] text-[#B8860B] font-bold mb-1">+5pt・7日連続🔥</div>
+              <div className="text-[10px] text-gray-500">🌤 今日のキャンパスは62%が「おだやか」以上</div>
+            </div>
+          )}
         </UTokyoBubble>
-        <UTokyoBubble delay={600}>
+        <UTokyoBubble delay={400}>
           <div className="bg-[#F0F5FF] rounded-xl p-3 -mx-1">
             <div className="text-[#00356B] font-bold text-sm mb-1">📋 研究調査のお願い</div>
             <div className="text-xs text-gray-600 mb-1">所要時間：約15分</div>
             <div className="text-xs text-gray-600 mb-2">回答完了でAmazonギフト券1,000円分をプレゼント！</div>
             <button onClick={() => onNavigate('utokyo_sso')} className="w-full bg-[#00356B] text-white rounded-full py-2.5 text-sm font-bold">アンケートに回答する</button>
           </div>
-        </UTokyoBubble>
-        <UTokyoBubble delay={900}>
-          <div className="text-xs">
-            <span className="font-bold">🧘 1分だけ、深呼吸しませんか？</span><br/>
-            <span className="text-gray-500">授業やレポートの合間に。呼吸トレーニングで頭がすっきりします（+10pt）</span>
-          </div>
-        </UTokyoBubble>
-        <UTokyoBubble delay={1200}>
-          <div className="text-xs text-gray-500">
-            ※ 回答は匿名化され研究目的のみに使用されます<br/>
-            ※ 途中保存が可能です。未完了の場合はLINEでリマインドをお送りします
-          </div>
+          <div className="text-[10px] text-gray-400 mt-1.5">匿名で研究にのみ利用・途中保存OK</div>
         </UTokyoBubble>
       </div>
-      <div className="bg-white border-t border-gray-100 p-2.5">
-        <div className="flex gap-1.5 mb-1.5">
-          <button onClick={() => onNavigate('utokyo_sso')} className="flex-1 bg-[#00356B] text-white rounded-xl py-2.5 text-[10px] font-bold">📋 アンケート回答</button>
-          <button onClick={() => onNavigate('utokyo_breath')} className="flex-1 bg-gradient-to-r from-teal-400 to-emerald-500 text-white rounded-xl py-2.5 text-[10px] font-bold">🧘 1分呼吸法</button>
-          <button onClick={() => onNavigate('utokyo_mypage')} className="flex-1 bg-amber-500 text-white rounded-xl py-2.5 text-[10px] font-bold">🏆 マイWell</button>
-        </div>
-        <button onClick={() => onNavigate('utokyo_avatar_chat')} className="w-full bg-gradient-to-r from-purple-500 to-indigo-600 text-white rounded-xl py-2.5 text-[10px] font-bold">🤖 AIアバターに相談する</button>
+      <div className="bg-white border-t border-gray-100 p-2.5 flex gap-1.5">
+        <button onClick={() => onNavigate('utokyo_breath')} className="flex-1 bg-gray-50 rounded-xl py-3 text-[10px] font-bold text-gray-700">🧘 1分呼吸法</button>
+        <button onClick={() => onNavigate('utokyo_mypage')} className="flex-1 bg-gray-50 rounded-xl py-3 text-[10px] font-bold text-gray-700">🏆 マイWell</button>
+        <button onClick={() => onNavigate('utokyo_avatar_chat')} className="flex-1 bg-gray-50 rounded-xl py-3 text-[10px] font-bold text-gray-700">🤖 AI相談</button>
       </div>
     </>
   )
@@ -908,12 +881,6 @@ function UTokyoMyPageScreen({ onNavigate, onBack }) {
     { day: '水', score: 58 }, { day: '木', score: 64 }, { day: '金', score: 61 },
     { day: '土', score: 70 }, { day: '日', score: 74 }, { day: '月', score: 68 }, { day: '火', score: 72 },
   ]
-  const badges = [
-    { icon: '🌱', label: 'はじめの一歩', earned: true },
-    { icon: '🔥', label: '7日連続', earned: true },
-    { icon: '📋', label: '調査協力×3', earned: true },
-    { icon: '🧘', label: '呼吸マスター', earned: false },
-  ]
   return (
     <div className="flex flex-col h-full slide-enter">
       <LiffHeader title="マイWell" onBack={onBack} onClose={onBack} />
@@ -950,24 +917,12 @@ function UTokyoMyPageScreen({ onNavigate, onBack }) {
             <div className="text-[10px] text-gray-400">500ptでギフト券に交換</div>
           </div>
         </div>
-        <div className="bg-white rounded-2xl p-4 shadow-sm mb-3">
-          <div className="text-xs font-bold text-gray-800 mb-3">バッジコレクション</div>
-          <div className="grid grid-cols-4 gap-2">
-            {badges.map((b, i) => (
-              <div key={i} className={`text-center ${b.earned ? '' : 'opacity-30 grayscale'}`}>
-                <div className="text-2xl mb-1">{b.icon}</div>
-                <div className="text-[8px] text-gray-500 leading-tight">{b.label}</div>
-              </div>
-            ))}
-          </div>
-        </div>
         <div className="bg-white rounded-2xl p-4 shadow-sm">
-          <div className="text-xs font-bold text-gray-800 mb-2">今日のセルフケア</div>
           <button onClick={() => onNavigate('utokyo_breath')} className="w-full flex items-center gap-3 p-3 bg-teal-50 rounded-xl mb-2">
             <span className="text-xl">🧘</span>
             <div className="flex-1 text-left">
               <div className="text-xs font-bold text-gray-800">1分呼吸法</div>
-              <div className="text-[10px] text-gray-400">+10pt・今週あと2回で呼吸マスター</div>
+              <div className="text-[10px] text-gray-400">+10pt・すきま時間にリセット</div>
             </div>
             <span className="text-gray-300">›</span>
           </button>
